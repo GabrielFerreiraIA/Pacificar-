@@ -19,7 +19,7 @@ import {
 import { getProfile, updateProfile } from '../lib/api/profile';
 import { getAnamnese, saveAnamnese, type AnamneseRecord } from '../lib/api/anamnese';
 import { listCheckins, upsertCheckin } from '../lib/api/checkins';
-import { listLabExams } from '../lib/api/labExams';
+import { apagarExame, listLabExams } from '../lib/api/labExams';
 import { getPrescription, savePrescription as apiSavePrescription } from '../lib/api/prescriptions';
 import { ensureCycles, updateCycle } from '../lib/api/parasiteCycles';
 import { listPreparo, listZeoliteDays, setPreparoItem, setZeoliteDay } from '../lib/api/marks';
@@ -52,6 +52,8 @@ interface AppContextType {
   syncing: boolean;
   /** Mensagem para a pessoa quando algo não foi salvo/carregado */
   syncError: string | null;
+  /** id do usuário logado; null na demonstração local */
+  userId: string | null;
 
   // Actions
   login: (email: string, role?: UserRole, name?: string) => void;
@@ -62,6 +64,9 @@ interface AppContextType {
   completeAnamnese: () => void;
   togglePreparoItem: (id: string) => void;
   uploadLabExam: (exam: Omit<LabExamFile, 'id' | 'created_at' | 'therapist_reviewed'>) => void;
+  /** Exame já enviado ao Storage e registrado no banco (T-50) */
+  addLabExam: (exam: LabExamFile) => void;
+  removeLabExam: (exam: LabExamFile) => Promise<boolean>;
   saveDailyCheckin: (checkin: Omit<DailyCheckin, 'id' | 'created_at'>) => void;
   updateParasiteCycle: (cycleId: string, updates: Partial<ParasiteCycle>) => void;
   toggleZeoliteDay: (day: number) => void;
@@ -400,7 +405,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, authRole, au
   };
 
   const uploadLabExam = (exam: Omit<LabExamFile, 'id' | 'created_at' | 'therapist_reviewed'>) => {
-    // Só na tela por enquanto: o envio real para o Storage chega na T-50
+    // Demonstração local: o envio real (com login) usa enviarExame + addLabExam
     const newExam: LabExamFile = {
       ...exam,
       id: 'local_' + Date.now(),
@@ -408,6 +413,22 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, authRole, au
       created_at: new Date().toISOString()
     };
     setLabExams(prev => [newExam, ...prev]);
+  };
+
+  const addLabExam = (exam: LabExamFile) => setLabExams(prev => [exam, ...prev]);
+
+  const removeLabExam = async (exam: LabExamFile) => {
+    if (!isDemo && !exam.id.startsWith('local_')) {
+      try {
+        await apagarExame(exam);
+      } catch (e) {
+        console.warn('[sync] falha ao apagar exame:', e instanceof Error ? e.message : e);
+        setSyncError(MSG_SALVAR);
+        return false;
+      }
+    }
+    setLabExams(prev => prev.filter(e => e.id !== exam.id));
+    return true;
   };
 
   const saveDailyCheckin = (checkinData: Omit<DailyCheckin, 'id' | 'created_at'>) => {
@@ -526,6 +547,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, authRole, au
         activePatientIdForAdmin,
         syncing,
         syncError,
+        userId: isDemo ? null : uid,
         login,
         logout,
         switchRole,
@@ -534,6 +556,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, authRole, au
         completeAnamnese,
         togglePreparoItem,
         uploadLabExam,
+        addLabExam,
+        removeLabExam,
         saveDailyCheckin,
         updateParasiteCycle,
         toggleZeoliteDay,
