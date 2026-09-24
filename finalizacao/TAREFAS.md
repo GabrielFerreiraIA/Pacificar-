@@ -95,7 +95,7 @@ Use os comandos em vez de editar à mão:  npm run tarefa -- iniciar|concluir|bl
   - Hoje param em janeiro/2027 (`src/data/mockData.ts`). Calcular as luas cheias por algoritmo ou gerar tabela até 2030.
 - [ ] **T-56** Remover dados fictícios e fotos do Unsplash do build de produção · @agente · dep: T-14
   - `DEFAULT_*`, `OTHER_PATIENTS_LIST` e as URLs do Unsplash saem do bundle. Avatar com iniciais ou foto enviada pela Ana.
-- [ ] **T-57** Painel da terapeuta com dados reais · @agente · dep: T-14, T-50
+- [~] **T-57** Painel da terapeuta com dados reais · @agente · dep: T-14, T-50 · em andamento: claude (2026-09-24)
   - Lista de pacientes do banco, anamnese completa, check-ins, exames (signed URL), salvar prescrição.
 
 ## Fase 6 · LGPD e jurídico
