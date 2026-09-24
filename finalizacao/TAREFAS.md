@@ -81,7 +81,7 @@ Use os comandos em vez de editar à mão:  npm run tarefa -- iniciar|concluir|bl
 
 ## Fase 5 · Funcionalidades e conteúdo
 
-- [ ] **T-50** Upload real de exames para o Storage · @agente · dep: T-13, T-14
+- [~] **T-50** Upload real de exames para o Storage · @agente · dep: T-13, T-14 · em andamento: claude (2026-09-24)
   - Substitui `file_url: '#'` em `ExamesUploadPage.tsx`. Progresso de envio e tratamento de erro.
   - **Plano grátis:** comprimir fotos no aparelho (canvas → WebP/JPEG, lado maior 1600 px, qualidade ~0,8) antes de enviar. PDF vai como está. Mostrar a cota (20 arquivos) quando chegar perto (ver D11).
 - [ ] **T-51** Ana grava os 21 áudios da jornada · @ana · dep: —
