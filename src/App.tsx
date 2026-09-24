@@ -20,6 +20,7 @@ import { PreparoPage } from './pages/patient/PreparoPage';
 import { ExamesUploadPage } from './pages/onboarding/ExamesUploadPage';
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
 import { TourOverlay } from './components/onboarding/TourOverlay';
+import { ErrorBoundary } from './components/feedback/ErrorBoundary';
 
 type SubScreen = 'none' | 'checkin' | 'report' | 'exams';
 
@@ -98,6 +99,7 @@ const AppContent: React.FC = () => {
 
       {/* Padding inferior reserva espaço para a barra fixa (fixed-element-offset) */}
       <main className="relative z-10 mx-auto w-full max-w-3xl flex-1 px-5 pb-32 pt-6">
+        <ErrorBoundary variant="page" resetKeys={[activeTab, subScreen]}>
         {subScreen === 'checkin' && (
           <CheckinNightlyPage
             dayNumber={checkinDay}
@@ -151,6 +153,7 @@ const AppContent: React.FC = () => {
             {activeTab === 'admin' && <AdminDashboardPage />}
           </>
         )}
+        </ErrorBoundary>
       </main>
 
       {subScreen === 'none' && <BottomNav activeTab={activeTab} onSelectTab={goToTab} />}

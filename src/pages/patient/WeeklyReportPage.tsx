@@ -124,7 +124,7 @@ export const WeeklyReportPage: React.FC<WeeklyReportPageProps> = ({ initialWeek 
       data.reduce((sum, d) => sum + Number(d[key]), 0) / data.length;
 
     const bloatingChange =
-      first.inchaco === 0 ? 0 : Math.round(((last.inchaco - first.inchaco) / first.inchaco) * 100);
+      !first.inchaco ? 0 : Math.round(((last.inchaco - first.inchaco) / first.inchaco) * 100);
 
     return {
       bristol: last.bristol,
