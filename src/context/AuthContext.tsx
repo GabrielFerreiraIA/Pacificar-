@@ -13,6 +13,8 @@ export const SET_PASSWORD_PATH = '/definir-senha';
 
 /** Prefixo de tudo que o app guarda no aparelho (cache offline). */
 const LOCAL_PREFIX = 'pacificar_';
+/** Preferências de interface que não são dado pessoal: sobrevivem ao Sair. */
+const MANTER_AO_SAIR = new Set(['pacificar_tour_v1']);
 
 type LinkError = 'expired' | 'invalid' | null;
 
@@ -77,7 +79,7 @@ function lerLinkDoEmail(): { isSetPassword: boolean; error: LinkError } {
 export function limparCacheLocal() {
   try {
     Object.keys(localStorage)
-      .filter(k => k.startsWith(LOCAL_PREFIX))
+      .filter(k => k.startsWith(LOCAL_PREFIX) && !MANTER_AO_SAIR.has(k))
       .forEach(k => localStorage.removeItem(k));
   } catch {
     /* armazenamento indisponível */

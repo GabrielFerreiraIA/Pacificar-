@@ -5,7 +5,7 @@ export interface UserProfile {
   full_name: string;
   email: string;
   role: UserRole;
-  weight: number;
+  weight?: number;
   height?: number;
   age?: number;
   phone?: string;

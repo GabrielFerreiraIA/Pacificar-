@@ -210,7 +210,11 @@ const AuthGate: React.FC = () => {
   if (session && profile?.access_status === 'revoked') return <SuspendedPage />;
 
   return (
-    <AppProvider authRole={session ? (profile?.role ?? 'patient') : undefined}>
+    <AppProvider
+      key={session?.user.id ?? 'demo'}
+      authUserId={session?.user.id}
+      authRole={session ? (profile?.role ?? 'patient') : undefined}
+    >
       <AppContent />
     </AppProvider>
   );

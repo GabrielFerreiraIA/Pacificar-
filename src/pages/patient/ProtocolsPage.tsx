@@ -41,8 +41,10 @@ export const ProtocolsPage: React.FC = () => {
   const [protocol, setProtocol] = useState<Protocol>('zeolita');
   const [weekIndex, setWeekIndex] = useState(0);
 
-  const weight = currentUser?.weight ?? 68;
+  // Dose depende do peso real: sem peso informado, nada de valor presumido (T-14)
+  const weight = currentUser?.weight;
   const posology = useMemo(() => {
+    if (weight == null) return null;
     if (weight < 60) return IVERMECTIN_POSOLOGY_TABLE[0];
     if (weight <= 80) return IVERMECTIN_POSOLOGY_TABLE[1];
     return IVERMECTIN_POSOLOGY_TABLE[2];
@@ -295,12 +297,21 @@ export const ProtocolsPage: React.FC = () => {
               </span>
               <div className="min-w-0">
                 <p className="eyebrow">Sua posologia</p>
-                <p className="mt-1 text-[15px] font-semibold text-ink">
-                  Peso registrado: <span className="tnum">{weight}</span> kg
-                </p>
-                <p className="mt-0.5 text-[12.5px] text-ink-3">
-                  Faixa {posology.weight_range}
-                </p>
+                {posology ? (
+                  <>
+                    <p className="mt-1 text-[15px] font-semibold text-ink">
+                      Peso registrado: <span className="tnum">{weight}</span> kg
+                    </p>
+                    <p className="mt-0.5 text-[12.5px] text-ink-3">Faixa {posology.weight_range}</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="mt-1 text-[15px] font-semibold text-ink">Peso ainda não informado</p>
+                    <p className="mt-0.5 text-[12.5px] leading-relaxed text-ink-3">
+                      A dose da ivermectina depende do seu peso. Informe à Ana antes do primeiro ciclo.
+                    </p>
+                  </>
+                )}
               </div>
             </div>
 
@@ -309,8 +320,10 @@ export const ProtocolsPage: React.FC = () => {
                 {
                   icon: PillIcon,
                   name: 'Ivermectina',
-                  dose: `${posology.tablets_per_cycle} comprimidos · ${posology.total_mg}`,
-                  when: posology.timing,
+                  dose: posology
+                    ? `${posology.tablets_per_cycle} comprimidos · ${posology.total_mg}`
+                    : 'Dose definida pela Ana conforme o seu peso',
+                  when: posology?.timing ?? 'Após o café da manhã, nos 3 dias do ciclo',
                   tone: 'leaf' as const
                 },
                 {

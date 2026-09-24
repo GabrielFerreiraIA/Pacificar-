@@ -45,7 +45,7 @@ try {
   ok((await texto()).includes(email), 'Menu mostra o e-mail da conta');
   await clicarTexto('Sair da conta'); await sleep(1500);
   ok((await texto()).includes('Entrar na sua jornada'), 'Sair volta para o login');
-  const sobrou = await page.evaluate(() => Object.keys(localStorage).filter(k => k.startsWith('pacificar_') || k.startsWith('sb-')));
+  const sobrou = await page.evaluate(() => Object.keys(localStorage).filter(k => (k.startsWith('pacificar_') && k !== 'pacificar_tour_v1') || k.startsWith('sb-')));
   ok(sobrou.length === 0, `Sair limpa cache local e sessão (restou: ${sobrou.join(',') || 'nada'})`);
 
   await clicarTexto('Esqueci minha senha'); await sleep(300);
