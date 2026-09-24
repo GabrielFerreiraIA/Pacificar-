@@ -1,0 +1,28 @@
+# Keep-alive redundante do Supabase gratuito (T-42 · PLANO.md D4).
+# Secrets no GitHub (Settings → Secrets and variables → Actions): CRON_SECRET e APP_URL.
+name: keepalive
+
+on:
+  schedule:
+    - cron: '17 */12 * * *'   # a cada 12h (minuto 17 para fugir do pico do GitHub no minuto 0)
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Chamar /api/keepalive
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          APP_URL: ${{ secrets.APP_URL }}
+        run: |
+          if [ -z "$CRON_SECRET" ] || [ -z "$APP_URL" ]; then
+            echo "::error::Cadastre os secrets CRON_SECRET e APP_URL no repositório."
+            exit 1
+          fi
+          curl -fsS --retry 3 --retry-delay 20 --retry-all-errors --max-time 30 \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            "${APP_URL%/}/api/keepalive?src=github-actions"
