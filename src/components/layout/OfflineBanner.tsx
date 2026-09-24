@@ -18,7 +18,8 @@ export const OfflineBanner: React.FC = () => {
     };
   }, []);
 
-  const { syncError, dismissSyncError } = useApp();
+  const { syncError, dismissSyncError, pendingSync } = useApp();
+  const registros = pendingSync === 1 ? '1 registro' : `${pendingSync} registros`;
 
   // Falha ao salvar/carregar no servidor (T-14), com a internet aparentemente ligada
   if (isOnline && syncError) {
@@ -39,6 +40,17 @@ export const OfflineBanner: React.FC = () => {
     );
   }
 
+  if (isOnline && pendingSync > 0) {
+    return (
+      <div role="status" aria-live="polite" className="pt-safe sticky top-0 z-50 bg-leaf-50 px-5 py-2.5 text-center">
+        <p className="inline-flex items-center gap-2 text-[12.5px] font-semibold text-leaf-700">
+          <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden="true" />
+          Enviando {registros} feitos sem internet…
+        </p>
+      </div>
+    );
+  }
+
   if (isOnline) return null;
 
   return (
@@ -49,7 +61,9 @@ export const OfflineBanner: React.FC = () => {
     >
       <p className="inline-flex items-center gap-2 text-[12.5px] font-semibold text-ochre-700">
         <CloudOff className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden="true" />
-        Sem conexão · seus guias e receitas continuam disponíveis
+        {pendingSync > 0
+          ? `Sem conexão · ${registros} guardados neste aparelho, enviamos quando a internet voltar`
+          : 'Sem conexão · o que você registrar fica guardado e é enviado quando a internet voltar'}
       </p>
     </div>
   );

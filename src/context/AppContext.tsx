@@ -16,13 +16,14 @@ import {
   DEFAULT_PARASITE_CYCLES,
   OTHER_PATIENTS_LIST
 } from '../data/mockData';
-import { getProfile, updateProfile } from '../lib/api/profile';
-import { getAnamnese, saveAnamnese, type AnamneseRecord } from '../lib/api/anamnese';
-import { listCheckins, upsertCheckin } from '../lib/api/checkins';
+import { getProfile } from '../lib/api/profile';
+import { getAnamnese, type AnamneseRecord } from '../lib/api/anamnese';
+import { listCheckins } from '../lib/api/checkins';
 import { apagarExame, listLabExams } from '../lib/api/labExams';
 import { getPrescription, savePrescription as apiSavePrescription } from '../lib/api/prescriptions';
-import { ensureCycles, updateCycle } from '../lib/api/parasiteCycles';
-import { listPreparo, listZeoliteDays, setPreparoItem, setZeoliteDay } from '../lib/api/marks';
+import { ensureCycles } from '../lib/api/parasiteCycles';
+import { listPreparo, listZeoliteDays } from '../lib/api/marks';
+import { ehErroDeRede, enfileirar, esvaziarFila, executar, lerFila, type Op } from '../lib/offlineQueue';
 
 export type { AnamneseRecord };
 
@@ -54,6 +55,8 @@ interface AppContextType {
   syncError: string | null;
   /** id do usuário logado; null na demonstração local */
   userId: string | null;
+  /** Registros feitos sem internet, aguardando envio (T-73) */
+  pendingSync: number;
 
   // Actions
   login: (email: string, role?: UserRole, name?: string) => void;
@@ -200,6 +203,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, authRole, au
   const [syncing, setSyncing] = useState(!isDemo);
   const [syncError, setSyncError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [pendingSync, setPendingSync] = useState(() => (isDemo ? 0 : lerFila(uid).length));
 
   /* ── Grava no servidor (modo real). Falha vira aviso, nunca quebra a tela. ── */
   const write = useCallback(
@@ -216,6 +220,52 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, authRole, au
     [isDemo]
   );
 
+  /* ── Fila offline (T-73) ───────────────────────────────────── */
+  const descarregar = useCallback(async () => {
+    if (isDemo) return 0;
+    const { pendentes, recusadas } = await esvaziarFila(uid);
+    setPendingSync(pendentes);
+    if (recusadas) setSyncError(MSG_SALVAR);
+    return pendentes;
+  }, [isDemo, uid]);
+
+  /**
+   * Grava uma ação da paciente. Sem internet (ou com fila pendente, para manter a ordem),
+   * a ação vai para a fila do aparelho e sobe quando a conexão voltar.
+   */
+  const enviar = useCallback(
+    async (op: Op) => {
+      if (isDemo) return;
+      const guardar = () => {
+        enfileirar(uid, op);
+        setPendingSync(lerFila(uid).length);
+      };
+      if (!navigator.onLine || lerFila(uid).length) {
+        guardar();
+        void descarregar();
+        return;
+      }
+      try {
+        await executar(uid, op);
+      } catch (e) {
+        if (ehErroDeRede(e)) guardar();
+        else {
+          console.warn('[sync] falha ao salvar:', e instanceof Error ? e.message : e);
+          setSyncError(MSG_SALVAR);
+        }
+      }
+    },
+    [isDemo, uid, descarregar]
+  );
+
+  // Internet voltou: envia o que ficou guardado
+  useEffect(() => {
+    if (isDemo) return;
+    const onOnline = () => void descarregar();
+    window.addEventListener('online', onOnline);
+    return () => window.removeEventListener('online', onOnline);
+  }, [isDemo, descarregar]);
+
   /* ── Carga inicial do servidor ─────────────────────────────── */
   useEffect(() => {
     if (isDemo) return;
@@ -224,6 +274,12 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, authRole, au
 
     (async () => {
       try {
+        // Primeiro sobe o que ficou guardado sem internet; se ainda houver pendência,
+        // mantém a versão deste aparelho (a do servidor estaria desatualizada)
+        if ((await descarregar()) > 0) {
+          if (ativo) setSyncing(false);
+          return;
+        }
         const profile = await getProfile(uid);
         const [anam, chk, exams, presc, zeo, prep] = await Promise.all([
           getAnamnese(uid),
@@ -269,6 +325,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, authRole, au
     return () => {
       ativo = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDemo, uid, reloadKey]);
 
   /* ── Cache local ───────────────────────────────────────────── */
@@ -319,8 +376,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, authRole, au
   const pushAnamnese = useCallback(() => {
     anamneseTimer.current = undefined;
     const { answers, completed } = anamneseRef.current;
-    void write(() => saveAnamnese(uid, answers, completed));
-  }, [uid, write]);
+    void enviar({ t: 'anamnese', answers, completed });
+  }, [enviar]);
 
   const flushAnamnese = useCallback(() => {
     if (anamneseTimer.current === undefined) return;
@@ -401,7 +458,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, authRole, au
   const togglePreparoItem = (id: string) => {
     const checked = !preparoChecked.includes(id);
     setPreparoChecked(prev => (checked ? [...prev, id] : prev.filter(i => i !== id)));
-    void write(() => setPreparoItem(uid, id, checked));
+    void enviar({ t: 'preparo', itemId: id, checked });
   };
 
   const uploadLabExam = (exam: Omit<LabExamFile, 'id' | 'created_at' | 'therapist_reviewed'>) => {
@@ -443,22 +500,20 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, authRole, au
       const filtered = prev.filter(c => c.day_number !== checkinData.day_number);
       return [...filtered, newCheckin].sort((a, b) => a.day_number - b.day_number);
     });
-    void write(async () => {
-      const salvo = await upsertCheckin(uid, checkinData);
-      setCheckins(prev => prev.map(c => (c.day_number === salvo.day_number ? salvo : c)));
-    });
+    const { user_id: _ignorado, ...checkin } = checkinData;
+    void enviar({ t: 'checkin', checkin });
 
     // Zeólita marcada no check-in conta no protocolo
     if (checkinData.zeolite_taken && !zeoliteLoggedDays.includes(checkinData.day_number)) {
       setZeoliteLoggedDays(prev => [...prev, checkinData.day_number].sort((a, b) => a - b));
-      void write(() => setZeoliteDay(uid, checkinData.day_number, true));
+      void enviar({ t: 'zeolite', day: checkinData.day_number, marked: true });
     }
 
     // Avança o dia liberado da jornada
     if (currentUser && checkinData.day_number >= currentUser.current_day && checkinData.day_number < 21) {
       const proximo = checkinData.day_number + 1;
       setCurrentUser(prev => (prev ? { ...prev, current_day: proximo } : null));
-      void write(() => updateProfile(uid, { current_day: proximo }));
+      void enviar({ t: 'profile', patch: { current_day: proximo } });
     }
   };
 
@@ -470,13 +525,13 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, authRole, au
         ([, v]) => v !== undefined
       )
     );
-    if (Object.keys(patch).length) void write(() => updateCycle(cycleId, patch));
+    if (Object.keys(patch).length) void enviar({ t: 'cycle', cycleId, patch });
   };
 
   const toggleZeoliteDay = (day: number) => {
     const marked = !zeoliteLoggedDays.includes(day);
     setZeoliteLoggedDays(prev => (marked ? [...prev, day].sort((a, b) => a - b) : prev.filter(d => d !== day)));
-    void write(() => setZeoliteDay(uid, day, marked));
+    void enviar({ t: 'zeolite', day, marked });
   };
 
   const savePrescription = (newPrescription: Partial<Prescription>) => {
@@ -548,6 +603,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, authRole, au
         syncing,
         syncError,
         userId: isDemo ? null : uid,
+        pendingSync,
         login,
         logout,
         switchRole,

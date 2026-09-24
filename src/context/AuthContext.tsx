@@ -125,19 +125,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
     let ativo = true;
-    setProfileLoading(true);
+    // Último perfil conhecido neste aparelho (prefixo pacificar_: o Sair apaga)
+    const chave = `pacificar_perfil_v1_${userId}`;
+    let guardado: AuthProfile | null = null;
+    try {
+      guardado = JSON.parse(localStorage.getItem(chave) ?? 'null');
+    } catch {
+      /* sem cache */
+    }
+    // Sem internet, abre na hora com o perfil guardado (T-73); online, espera o do banco
+    if (!navigator.onLine && guardado) {
+      setProfile(guardado);
+      setProfileLoading(false);
+    } else {
+      setProfileLoading(true);
+    }
     supabase
       .from('profiles')
       .select('role, access_status, full_name')
       .eq('id', userId)
       .maybeSingle()
-      .then(({ data }) => {
+      .then(({ data, error }) => {
         if (!ativo) return;
-        setProfile({
-          role: data?.role === 'admin' ? 'admin' : 'patient',
-          access_status: data?.access_status === 'revoked' ? 'revoked' : 'active',
-          full_name: data?.full_name ?? ''
-        });
+        if (error && guardado) {
+          setProfile(guardado);
+        } else {
+          const p: AuthProfile = {
+            role: data?.role === 'admin' ? 'admin' : 'patient',
+            access_status: data?.access_status === 'revoked' ? 'revoked' : 'active',
+            full_name: data?.full_name ?? ''
+          };
+          setProfile(p);
+          if (!error) {
+            try {
+              localStorage.setItem(chave, JSON.stringify(p));
+            } catch {
+              /* armazenamento indisponível */
+            }
+          }
+        }
         setProfileLoading(false);
       });
     return () => {
@@ -174,6 +200,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signOut = useCallback(async () => {
+    // Registros feitos sem internet ainda não enviados se perderiam ao sair (T-73)
+    const pendentes = Object.keys(localStorage).some(k => k.startsWith('pacificar_fila_v1_'));
+    if (
+      pendentes &&
+      !window.confirm(
+        'Há registros feitos sem internet que ainda não foram enviados. Se sair agora, eles se perdem. Sair mesmo assim?'
+      )
+    ) {
+      return;
+    }
     // Aparelho pode ser compartilhado: nada de dado de saúde fica para trás
     limparCacheLocal();
     if (supabase) await supabase.auth.signOut();
