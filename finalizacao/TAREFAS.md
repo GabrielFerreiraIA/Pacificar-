@@ -111,7 +111,7 @@ Use os comandos em vez de editar à mão:  npm run tarefa -- iniciar|concluir|bl
 ## Fase 7 · Qualidade e PWA
 
 - [x] **T-70** ErrorBoundary com tela de erro amigável · @agente · dep: — · concluída: claude (2026-09-24)
-- [ ] **T-71** Ícones PNG do PWA (180, 192, 512 e maskable) · @agente · dep: —
+- [~] **T-71** Ícones PNG do PWA (180, 192, 512 e maskable) · @agente · dep: — · em andamento: claude (2026-09-24)
   - `apple-touch-icon.png` está declarado no `vite.config.ts`, mas não existe em `public/`.
 - [ ] **T-72** Code splitting das páginas (bundle hoje com 881 kB) · @agente · dep: —
   - `React.lazy` por página. `recharts` num chunk separado. Meta: chunk inicial < 300 kB.
