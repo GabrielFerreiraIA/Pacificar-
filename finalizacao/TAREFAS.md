@@ -24,9 +24,9 @@ Use os comandos em vez de editar à mão:  npm run tarefa -- iniciar|concluir|bl
 
 ## Fase 1 · Supabase (banco de dados)
 
-- [ ] **T-10** Criar o projeto Supabase (região São Paulo) e cadastrar as chaves · @gabriel · dep: T-01
+- [x] **T-10** Criar o projeto Supabase (região São Paulo) e cadastrar as chaves · @gabriel · dep: T-01 · concluída: gabriel (2026-09-24)
   - Chaves em `.env.local` e nas env vars da Vercel (ver tabela no PLANO.md).
-- [ ] **T-11** Migration inicial do schema · @agente · dep: T-10
+- [~] **T-11** Migration inicial do schema · @agente · dep: T-10 · em andamento: claude (2026-09-24)
   - `supabase/migrations/0001_init.sql`: `profiles` (id = auth.users, role, full_name, phone, access_status, journey_start_date, kiwify_order_id), `anamneses` (answers jsonb, completed), `checkins`, `lab_exams`, `prescriptions`, `parasite_cycles`, `zeolite_days`, `preparo_checked`, `dosha_results`, `consents`, `purchases`, `heartbeat`.
   - Trigger que cria `profiles` ao surgir um `auth.users`.
   - Aceite: a migration aplica num banco vazio sem erro. Tipos gerados em `src/types/database.ts`.
