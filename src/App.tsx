@@ -3,24 +3,34 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { AppProvider } from './context/AppContext';
 import { AppHeader } from './components/layout/AppHeader';
 import { BottomNav } from './components/layout/BottomNav';
 import { OfflineBanner } from './components/layout/OfflineBanner';
 
 import { HomeDailyPage } from './pages/patient/HomeDailyPage';
-import { CheckinNightlyPage } from './pages/patient/CheckinNightlyPage';
-import { WeeklyReportPage } from './pages/patient/WeeklyReportPage';
-import { NutritionGuidePage } from './pages/patient/NutritionGuidePage';
-import { ProtocolsPage } from './pages/patient/ProtocolsPage';
-import { ProfilePage } from './pages/patient/ProfilePage';
-import { AnamnesePage } from './pages/patient/AnamnesePage';
-import { PreparoPage } from './pages/patient/PreparoPage';
-import { ExamesUploadPage } from './pages/onboarding/ExamesUploadPage';
-import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
 import { TourOverlay } from './components/onboarding/TourOverlay';
 import { ErrorBoundary } from './components/feedback/ErrorBoundary';
+
+/* Code splitting (T-72): só a Home vai no pacote inicial; o resto carrega sob demanda.
+   Os pedaços continuam no precache do service worker, então o app segue offline. */
+const CheckinNightlyPage = lazy(() => import('./pages/patient/CheckinNightlyPage').then(m => ({ default: m.CheckinNightlyPage })));
+const WeeklyReportPage = lazy(() => import('./pages/patient/WeeklyReportPage').then(m => ({ default: m.WeeklyReportPage })));
+const NutritionGuidePage = lazy(() => import('./pages/patient/NutritionGuidePage').then(m => ({ default: m.NutritionGuidePage })));
+const ProtocolsPage = lazy(() => import('./pages/patient/ProtocolsPage').then(m => ({ default: m.ProtocolsPage })));
+const ProfilePage = lazy(() => import('./pages/patient/ProfilePage').then(m => ({ default: m.ProfilePage })));
+const AnamnesePage = lazy(() => import('./pages/patient/AnamnesePage').then(m => ({ default: m.AnamnesePage })));
+const PreparoPage = lazy(() => import('./pages/patient/PreparoPage').then(m => ({ default: m.PreparoPage })));
+const ExamesUploadPage = lazy(() => import('./pages/onboarding/ExamesUploadPage').then(m => ({ default: m.ExamesUploadPage })));
+const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage').then(m => ({ default: m.AdminDashboardPage })));
+
+const PageLoading: React.FC = () => (
+  <div role="status" className="flex justify-center py-20">
+    <span className="h-6 w-6 animate-spin rounded-full border-2 border-leaf-500 border-t-transparent" aria-hidden="true" />
+    <span className="sr-only">Carregando…</span>
+  </div>
+);
 
 type SubScreen = 'none' | 'checkin' | 'report' | 'exams';
 
@@ -100,6 +110,7 @@ const AppContent: React.FC = () => {
       {/* Padding inferior reserva espaço para a barra fixa (fixed-element-offset) */}
       <main className="relative z-10 mx-auto w-full max-w-3xl flex-1 px-5 pb-32 pt-6">
         <ErrorBoundary variant="page" resetKeys={[activeTab, subScreen]}>
+        <Suspense fallback={<PageLoading />}>
         {subScreen === 'checkin' && (
           <CheckinNightlyPage
             dayNumber={checkinDay}
@@ -153,6 +164,7 @@ const AppContent: React.FC = () => {
             {activeTab === 'admin' && <AdminDashboardPage />}
           </>
         )}
+        </Suspense>
         </ErrorBoundary>
       </main>
 

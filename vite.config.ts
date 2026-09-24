@@ -96,6 +96,20 @@ export default defineConfig(() => {
         },
       }),
     ],
+    build: {
+      rollupOptions: {
+        output: {
+          // Bibliotecas em pedaços próprios: mudam pouco, então ficam no cache entre deploys (T-72)
+          manualChunks(id: string) {
+            if (!id.includes('node_modules')) return;
+            const pkg = id.replace(/\\/g, '/').split('node_modules/').pop() ?? '';
+            if (/^(react|react-dom|scheduler)\//.test(pkg)) return 'react';
+            if (pkg.startsWith('@supabase/')) return 'supabase';
+            if (/^(recharts|d3-|victory-vendor|es-toolkit|immer|react-redux|@reduxjs|reselect|decimal\.js)/.test(pkg)) return 'recharts';
+          },
+        },
+      },
+    },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
