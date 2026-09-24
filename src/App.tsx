@@ -4,7 +4,7 @@
  */
 
 import React, { Suspense, lazy, useEffect, useState } from 'react';
-import { AppProvider } from './context/AppContext';
+import { AppProvider, useApp } from './context/AppContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LoginPage, SetPasswordPage } from './pages/auth/AuthScreens';
 import { Logo } from './components/ui/Primitives';
@@ -41,7 +41,13 @@ type SubScreen = 'none' | 'checkin' | 'report' | 'exams';
 const TOUR_KEY = 'pacificar_tour_v1';
 
 const AppContent: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('hoje');
+  const { role } = useApp();
+  const [activeTab, setActiveTab] = useState(() => (role === 'admin' ? 'admin' : 'hoje'));
+
+  // Guarda (T-22): a aba do painel só existe para a terapeuta, mesmo se o estado for forçado
+  useEffect(() => {
+    if (activeTab === 'admin' && role !== 'admin') setActiveTab('hoje');
+  }, [activeTab, role]);
   const [showTour, setShowTour] = useState(false);
 
   // Só abre depois da primeira pintura, para os alvos já existirem no DOM
@@ -164,7 +170,7 @@ const AppContent: React.FC = () => {
               />
             )}
 
-            {activeTab === 'admin' && <AdminDashboardPage />}
+            {activeTab === 'admin' && role === 'admin' && <AdminDashboardPage />}
           </>
         )}
         </Suspense>
@@ -191,7 +197,7 @@ const Splash: React.FC = () => (
  * Em desenvolvimento dá para abrir a demo com dados fictícios sem login.
  */
 const AuthGate: React.FC = () => {
-  const { session, loading, mustSetPassword } = useAuth();
+  const { session, profile, loading, mustSetPassword } = useAuth();
   const [demo, setDemo] = useState(false);
 
   if (mustSetPassword) return <SetPasswordPage />;
@@ -201,7 +207,7 @@ const AuthGate: React.FC = () => {
   }
 
   return (
-    <AppProvider>
+    <AppProvider authRole={session ? (profile?.role ?? 'patient') : undefined}>
       <AppContent />
     </AppProvider>
   );

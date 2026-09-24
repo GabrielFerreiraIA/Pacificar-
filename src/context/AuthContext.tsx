@@ -16,8 +16,17 @@ const LOCAL_PREFIX = 'pacificar_';
 
 type LinkError = 'expired' | 'invalid' | null;
 
+/** O que o app precisa saber da pessoa logada, lido de public.profiles (T-22). */
+export interface AuthProfile {
+  role: 'patient' | 'admin';
+  access_status: 'active' | 'revoked';
+  full_name: string;
+}
+
 interface AuthContextType {
   session: Session | null;
+  /** Perfil do banco; null sem sessão ou enquanto carrega */
+  profile: AuthProfile | null;
   /** true enquanto a sessão salva no aparelho ainda está sendo lida */
   loading: boolean;
   configured: boolean;
@@ -77,6 +86,8 @@ export function limparCacheLocal() {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<AuthProfile | null>(null);
+  const [profileLoading, setProfileLoading] = useState(false);
   const [loading, setLoading] = useState(isSupabaseConfigured);
   const [link] = useState(lerLinkDoEmail);
   const [mustSetPassword, setMustSetPassword] = useState(link.isSetPassword);
@@ -102,6 +113,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       sub.subscription.unsubscribe();
     };
   }, []);
+
+  // O papel vem SEMPRE do banco (nunca de dado editável no aparelho).
+  // Se a leitura falhar, vale o menor privilégio: paciente.
+  const userId = session?.user.id;
+  useEffect(() => {
+    if (!supabase || !userId) {
+      setProfile(null);
+      return;
+    }
+    let ativo = true;
+    setProfileLoading(true);
+    supabase
+      .from('profiles')
+      .select('role, access_status, full_name')
+      .eq('id', userId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!ativo) return;
+        setProfile({
+          role: data?.role === 'admin' ? 'admin' : 'patient',
+          access_status: data?.access_status === 'revoked' ? 'revoked' : 'active',
+          full_name: data?.full_name ?? ''
+        });
+        setProfileLoading(false);
+      });
+    return () => {
+      ativo = false;
+    };
+  }, [userId]);
 
   const signIn = useCallback(async (email: string, password: string) => {
     if (!supabase) return 'O aplicativo ainda não está conectado ao servidor.';
@@ -142,7 +182,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const value = useMemo<AuthContextType>(
     () => ({
       session,
-      loading,
+      profile,
+      loading: loading || profileLoading || (!!session && !profile),
       configured: isSupabaseConfigured,
       mustSetPassword,
       linkError: link.error,
@@ -152,7 +193,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       signOut,
       finishSetPassword
     }),
-    [session, loading, mustSetPassword, link.error, signIn, sendPasswordReset, updatePassword, signOut, finishSetPassword]
+    [session, profile, profileLoading, loading, mustSetPassword, link.error, signIn, sendPasswordReset, updatePassword, signOut, finishSetPassword]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

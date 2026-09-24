@@ -198,7 +198,7 @@ export const LoginPage: React.FC<{ onDemo?: () => void }> = ({ onDemo }) => {
             Servidor não configurado: faltam as variáveis VITE_SUPABASE_* no .env.local.
           </p>
         )}
-        {onDemo && (
+        {import.meta.env.DEV && onDemo && (
           <Button variant="ghost" onClick={onDemo}>
             Abrir modo demonstração (só em desenvolvimento)
           </Button>

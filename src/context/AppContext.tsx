@@ -76,7 +76,17 @@ const STORAGE_KEYS = {
   DAY: 'pacificar_selected_day_v1'
 };
 
-export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+interface AppProviderProps {
+  children: React.ReactNode;
+  /**
+   * Papel lido de profiles.role (T-22). Com sessão real ele manda, e o app não troca de papel.
+   * Ausente = demonstração local (só em desenvolvimento, sem login).
+   */
+  authRole?: UserRole;
+}
+
+export const AppProvider: React.FC<AppProviderProps> = ({ children, authRole }) => {
+  const isDemo = authRole === undefined;
   // Current user state
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.USER);
@@ -225,6 +235,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const switchRole = (newRole: UserRole) => {
+    // Com login real o papel vem do banco: trocar pelo app não é permitido
+    if (!isDemo) return;
     if (newRole === 'admin') {
       setCurrentUser(DEFAULT_ADMIN_PROFILE);
     } else {
@@ -347,7 +359,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     <AppContext.Provider
       value={{
         currentUser,
-        role: currentUser?.role || 'patient',
+        role: isDemo ? currentUser?.role || 'patient' : authRole,
         labExams,
         checkins,
         prescription,

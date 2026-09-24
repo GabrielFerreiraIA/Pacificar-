@@ -55,7 +55,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onNavigateToTab, onReplayT
               onClick={() => setMenuOpen(o => !o)}
               aria-haspopup="menu"
               aria-expanded={menuOpen}
-              aria-label={`Alternar visão. Atual: ${role === 'admin' ? 'terapeuta' : 'paciente'}`}
+              aria-label={`Menu da conta. Visão atual: ${role === 'admin' ? 'terapeuta' : 'paciente'}`}
               className={`tap press flex items-center gap-1.5 rounded-full border px-3 py-2 text-[12px] font-semibold ${
                 role === 'admin'
                   ? 'border-ochre-200 bg-ochre-50 text-ochre-700'
@@ -113,37 +113,42 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onNavigateToTab, onReplayT
                   </>
                 )}
 
-                <p className="eyebrow px-3 pb-1.5 pt-2">Modo de demonstração</p>
-                {(
-                  [
-                    { key: 'patient', label: 'Visão do paciente', icon: User, tab: 'hoje' },
-                    { key: 'admin', label: 'Painel da terapeuta', icon: ShieldCheck, tab: 'admin' }
-                  ] as const
-                ).map(item => {
-                  const active = role === item.key;
-                  const Icon = item.icon;
-                  return (
-                    <button
-                      key={item.key}
-                      role="menuitemradio"
-                      aria-checked={active}
-                      onClick={() => {
-                        switchRole(item.key);
-                        setMenuOpen(false);
-                        onNavigateToTab?.(item.tab);
-                      }}
-                      className={`flex w-full items-center justify-between gap-2 rounded-field px-3 py-2.5 text-[13px] font-semibold ${
-                        active ? 'bg-leaf-50 text-leaf-800' : 'text-ink-2 hover:bg-canvas'
-                      }`}
-                    >
-                      <span className="flex items-center gap-2.5">
-                        <Icon className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
-                        {item.label}
-                      </span>
-                      {active && <Check className="h-4 w-4 text-leaf-600" aria-hidden="true" />}
-                    </button>
-                  );
-                })}
+                {/* Troca de papel só na demonstração local: sem login e fora do build de produção (T-22) */}
+                {import.meta.env.DEV && !session && (
+                  <>
+                    <p className="eyebrow px-3 pb-1.5 pt-2">Modo de demonstração</p>
+                    {(
+                      [
+                        { key: 'patient', label: 'Visão do paciente', icon: User, tab: 'hoje' },
+                        { key: 'admin', label: 'Painel da terapeuta', icon: ShieldCheck, tab: 'admin' }
+                      ] as const
+                    ).map(item => {
+                      const active = role === item.key;
+                      const Icon = item.icon;
+                      return (
+                        <button
+                          key={item.key}
+                          role="menuitemradio"
+                          aria-checked={active}
+                          onClick={() => {
+                            switchRole(item.key);
+                            setMenuOpen(false);
+                            onNavigateToTab?.(item.tab);
+                          }}
+                          className={`flex w-full items-center justify-between gap-2 rounded-field px-3 py-2.5 text-[13px] font-semibold ${
+                            active ? 'bg-leaf-50 text-leaf-800' : 'text-ink-2 hover:bg-canvas'
+                          }`}
+                        >
+                          <span className="flex items-center gap-2.5">
+                            <Icon className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+                            {item.label}
+                          </span>
+                          {active && <Check className="h-4 w-4 text-leaf-600" aria-hidden="true" />}
+                        </button>
+                      );
+                    })}
+                  </>
+                )}
 
                 {session && (
                   <>
