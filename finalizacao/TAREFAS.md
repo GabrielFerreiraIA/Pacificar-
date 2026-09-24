@@ -53,7 +53,7 @@ Use os comandos em vez de editar à mão:  npm run tarefa -- iniciar|concluir|bl
 - [x] **T-22** Guarda de sessão e remoção do "Modo de demonstração" · @agente · dep: T-21 · concluída: claude (2026-09-24)
   - Sem sessão, só a tela de login renderiza. `role` vem de `profiles.role`. O menu "Modo de demonstração" (`AppHeader.tsx`) só existe com `import.meta.env.DEV`.
   - Aceite: um paciente logado não consegue abrir o painel da terapeuta de nenhum jeito.
-- [ ] **T-23** Tela de acesso suspenso (reembolso/chargeback) · @agente · dep: T-22
+- [~] **T-23** Tela de acesso suspenso (reembolso/chargeback) · @agente · dep: T-22 · em andamento: claude (2026-09-24)
   - Quando `access_status = 'revoked'`, mostra mensagem acolhedora e o contato da Ana.
 
 ## Fase 3 · Kiwify (compra cria o login)
