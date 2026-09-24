@@ -119,7 +119,7 @@ Use os comandos em vez de editar à mão:  npm run tarefa -- iniciar|concluir|bl
 - [x] **T-73** Check-in offline sincroniza quando a internet volta · @agente · dep: T-14 · concluída: claude (2026-09-24)
 - [ ] **T-74** Teste em iPhone e Android reais · @gabriel · dep: T-22, T-52, T-71
   - Instalar o PWA, logar, fazer check-in, ouvir áudio, enviar exame, usar offline.
-- [ ] **T-75** Lighthouse ≥ 90 em Performance, Acessibilidade e Boas práticas · @agente · dep: T-72
+- [~] **T-75** Lighthouse ≥ 90 em Performance, Acessibilidade e Boas práticas · @agente · dep: T-72 · em andamento: claude (2026-09-24)
 
 ## Fase 8 · Go-live
 
