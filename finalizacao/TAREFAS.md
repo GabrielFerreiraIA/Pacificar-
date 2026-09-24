@@ -128,5 +128,5 @@ Use os comandos em vez de editar à mão:  npm run tarefa -- iniciar|concluir|bl
   - Ver PLANO.md → Riscos, item 1.
 - [!] **T-82** Rotina de backup mensal do banco · @agente @gabriel · dep: T-11 · bloqueada: rotina pronta e testada; falta o Gabriel guardar a BACKUP_PASSPHRASE num gerenciador de senhas e agendar o backup mensal (2026-09-24)
   - Script `supabase db dump`. O arquivo fica **fora** do GitHub (dado de saúde).
-- [~] **T-83** Manual da Ana (ver pacientes, prescrever, suspender acesso) · @agente · dep: T-57 · em andamento: claude (2026-09-24)
+- [x] **T-83** Manual da Ana (ver pacientes, prescrever, suspender acesso) · @agente · dep: T-57 · concluída: claude (2026-09-24)
 - [ ] **T-84** Primeira venda real acompanhada e 7 dias de monitoramento · @gabriel @ana · dep: T-33, T-43, T-60, T-74
