@@ -10,7 +10,7 @@ Use os comandos em vez de editar à mão:  npm run tarefa -- iniciar|concluir|bl
 
 ## Fase 0 · Fundação do repositório
 
-- [~] **T-01** Commit inicial, branch main e repositório privado no GitHub · @gabriel @agente · dep: — · em andamento: claude (2026-09-24)
+- [!] **T-01** Commit inicial, branch main e repositório privado no GitHub · @gabriel @agente · dep: — · bloqueada: commit inicial e branch main feitos; falta o Gabriel criar o repo privado no GitHub e dar push (gh não instalado nesta máquina) (2026-09-24)
   - Aceite: `git log` mostra o commit inicial na branch `main`. Remote `origin` aponta para um repo **privado**. Push feito. Nenhum `.env` commitado.
 - [ ] **T-02** Higiene do projeto (nome, README, dependências mortas, .gitignore) · @agente · dep: T-01
   - `package.json`: nome `pacificar-app`, versão `0.1.0`. Remover `express`, `dotenv`, `@google/genai`, `motion` e `@types/express` (nenhum é importado em `src/`).
