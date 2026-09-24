@@ -30,7 +30,7 @@ Use os comandos em vez de editar à mão:  npm run tarefa -- iniciar|concluir|bl
   - `supabase/migrations/0001_init.sql`: `profiles` (id = auth.users, role, full_name, phone, access_status, journey_start_date, kiwify_order_id), `anamneses` (answers jsonb, completed), `checkins`, `lab_exams`, `prescriptions`, `parasite_cycles`, `zeolite_days`, `preparo_checked`, `dosha_results`, `consents`, `purchases`, `heartbeat`.
   - Trigger que cria `profiles` ao surgir um `auth.users`.
   - Aceite: a migration aplica num banco vazio sem erro. Tipos gerados em `src/types/database.ts`.
-- [ ] **T-12** Políticas RLS (paciente vê só o próprio, terapeuta vê tudo) · @agente · dep: T-11
+- [~] **T-12** Políticas RLS (paciente vê só o próprio, terapeuta vê tudo) · @agente · dep: T-11 · em andamento: claude (2026-09-24)
   - Função `is_admin()` com `security definer`. Toda tabela com RLS ligada. `purchases` e `heartbeat` sem policy (só service role).
   - Aceite: script SQL de teste prova que o paciente A não lê dados do paciente B.
 - [ ] **T-13** Bucket privado `exames` no Storage com policies por pasta do usuário · @agente · dep: T-12
