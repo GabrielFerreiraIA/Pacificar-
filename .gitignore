@@ -1,0 +1,14 @@
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+
+# Registro automático local das sessões do Claude Code
+finalizacao/logs/.sessoes.jsonl
+
+# Página gerada do checklist (fonte: finalizacao/checklist/template.html + TAREFAS.md)
+finalizacao/checklist/checklist.html

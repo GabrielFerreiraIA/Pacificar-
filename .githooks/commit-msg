@@ -1,0 +1,3 @@
+#!/bin/sh
+# Valida a marca de tarefa na mensagem. Lógica em finalizacao/hooks/commit-msg.mjs.
+exec node finalizacao/hooks/commit-msg.mjs "$1"

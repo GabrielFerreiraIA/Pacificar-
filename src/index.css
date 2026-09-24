@@ -1,0 +1,274 @@
+@import "tailwindcss";
+
+/* ═══════════════════════════════════════════════════════════════════
+   PACIFICAR — DESIGN SYSTEM
+   Paleta: Verde Floresta Ayurvédico + Off-white Pergaminho + Cúrcuma
+   Princípios: minimalismo calmo, respiro generoso, orgânico, um CTA por tela
+   ═══════════════════════════════════════════════════════════════════ */
+
+@theme {
+  /* ── Superfícies neutras quentes ───────────────────────────── */
+  --color-canvas: #f7f5f0;      /* fundo do app — pergaminho suave */
+  --color-canvas-2: #fffdf9;    /* fundo elevado */
+  --color-surface: #ffffff;     /* cards */
+  --color-line: #e6e2d8;        /* bordas */
+  --color-line-soft: #f0ede5;   /* divisores sutis */
+
+  /* ── Tinta / texto ────────────────────────────────────────── */
+  --color-ink: #16211c;         /* 15.8:1 sobre canvas */
+  --color-ink-2: #4f5d55;       /* 7.4:1 — secundário */
+  --color-ink-3: #6e7c75;       /* 4.6:1 — legendas (AA) */
+
+  /* ── Verde floresta (primária) ─────────────────────────────── */
+  --color-leaf-50: #f1f7f3;
+  --color-leaf-100: #e1efe6;
+  --color-leaf-200: #c3dfce;
+  --color-leaf-300: #96c6aa;
+  --color-leaf-400: #61a681;
+  --color-leaf-500: #3e8a5e;
+  --color-leaf-600: #2d6b48;    /* ação primária — 6.9:1 sobre branco */
+  --color-leaf-700: #245539;
+  --color-leaf-800: #1e4430;
+  --color-leaf-900: #193629;
+
+  /* ── Cúrcuma / ocre (secundária, acentos) ──────────────────── */
+  --color-ochre-50: #fdf8f0;
+  --color-ochre-100: #faedd8;
+  --color-ochre-200: #f3d9af;
+  --color-ochre-300: #e9be7c;
+  --color-ochre-400: #d0954a;
+  --color-ochre-500: #b57a30;
+  --color-ochre-600: #96612a;   /* 4.9:1 sobre branco */
+  --color-ochre-700: #7a4e24;
+
+  /* ── Semânticas ───────────────────────────────────────────── */
+  --color-clay-50: #fdf3f2;
+  --color-clay-100: #fae4e2;
+  --color-clay-500: #ba3c3c;
+  --color-clay-600: #9d3030;    /* 6.1:1 sobre branco */
+
+  --color-lunar-50: #f4f4fb;
+  --color-lunar-100: #e8e8f6;
+  --color-lunar-500: #6062a8;
+  --color-lunar-600: #4c4e8c;
+
+  /* ── Tipografia ───────────────────────────────────────────── */
+  --font-display: "Fraunces", "Iowan Old Style", Georgia, serif;
+  --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* ── Raios (superfície orgânica) ──────────────────────────── */
+  --radius-field: 0.875rem;   /* inputs / botões */
+  --radius-card: 1.5rem;      /* cards */
+  --radius-bloom: 2rem;       /* superfícies grandes */
+
+  /* ── Elevação (verde, nunca preto puro) ───────────────────── */
+  --shadow-leaf-sm: 0 1px 2px -1px rgb(25 54 41 / 0.06), 0 2px 8px -3px rgb(25 54 41 / 0.07);
+  --shadow-leaf: 0 2px 4px -2px rgb(25 54 41 / 0.06), 0 8px 20px -6px rgb(25 54 41 / 0.1);
+  --shadow-leaf-lg: 0 4px 8px -4px rgb(25 54 41 / 0.08), 0 20px 40px -12px rgb(25 54 41 / 0.16);
+
+  /* ── Movimento (tokens únicos para todo o app) ────────────── */
+  --ease-calm: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-calm: cubic-bezier(0.7, 0, 0.84, 0);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-feature-settings: "cv11", "ss01";
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
+  }
+
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-variation-settings: "SOFT" 30, "WONK" 1;
+    letter-spacing: -0.015em;
+    color: var(--color-ink);
+  }
+
+  h4, h5, h6 {
+    font-family: var(--font-sans);
+    letter-spacing: -0.01em;
+  }
+
+  /* Foco visível e consistente — nunca removido (WCAG 2.4.7) */
+  :focus-visible {
+    outline: 2px solid var(--color-leaf-600);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  /* Números tabulares em métricas para evitar layout shift */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+
+  ::selection {
+    background: var(--color-leaf-200);
+    color: var(--color-leaf-900);
+  }
+}
+
+@layer components {
+  /* ── Superfície base de card ──────────────────────────────── */
+  .card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-leaf-sm);
+  }
+
+  /* ── Rótulo de seção (eyebrow) ────────────────────────────── */
+  .eyebrow {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-ink-3);
+  }
+
+  /* ── Alvo de toque mínimo 44px (Apple HIG) ────────────────── */
+  .tap {
+    min-height: 44px;
+    min-width: 44px;
+    touch-action: manipulation;
+  }
+
+  /* ── Slider de áudio: trilha de 6px, alvo de toque de 44px ── */
+  .range-tap {
+    height: 44px;
+    background: transparent;
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  .range-tap::-webkit-slider-runnable-track {
+    height: 6px;
+    border-radius: 9999px;
+    background: var(--color-leaf-700);
+  }
+  .range-tap::-moz-range-track {
+    height: 6px;
+    border-radius: 9999px;
+    background: var(--color-leaf-700);
+  }
+  .range-tap::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    margin-top: -6px;
+    border-radius: 9999px;
+    background: var(--color-ochre-300);
+    border: 2px solid var(--color-leaf-800);
+  }
+  .range-tap::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--color-leaf-800);
+    border-radius: 9999px;
+    background: var(--color-ochre-300);
+  }
+
+  /* ── Feedback de pressão sem deslocar layout ──────────────── */
+  .press {
+    transition: transform 160ms var(--ease-calm), background-color 160ms var(--ease-calm),
+      border-color 160ms var(--ease-calm), box-shadow 160ms var(--ease-calm);
+  }
+  .press:active {
+    transform: scale(0.97);
+  }
+}
+
+@layer utilities {
+  /* ── Textura de papel: grão orgânico sutil sobre o canvas ─── */
+  .grain::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.35;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.42'/%3E%3C/svg%3E");
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+
+  /* Áreas seguras iOS (notch, Dynamic Island, barra de gestos) */
+  .pb-safe {
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 0.5rem);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .mb-safe {
+    margin-bottom: calc(env(safe-area-inset-bottom, 0px) + 0.75rem);
+  }
+
+  /* ── Entradas escalonadas (stagger 40ms) ──────────────────── */
+  .rise {
+    animation: rise 480ms var(--ease-calm) both;
+  }
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translate3d(0, 10px, 0);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .breathe {
+    animation: breathe 5s ease-in-out infinite;
+  }
+  @keyframes breathe {
+    0%, 100% { transform: scale(1); opacity: 0.55; }
+    50%      { transform: scale(1.06); opacity: 0.8; }
+  }
+}
+
+/* Barra de rolagem discreta, tom do sistema */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-line);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-leaf-200);
+}
+
+/* Respeita a preferência do sistema por menos movimento (WCAG 2.3.3) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

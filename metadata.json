@@ -1,0 +1,6 @@
+{
+  "name": "PACIFICAR — Saúde Integrativa & Ayurveda",
+  "description": "Micro aplicativo PWA para a jornada clínica de 21 dias de desinflamação, quelação com zeólita e desparasitação lunar por Ana Carla Nesi (CRP 17/2833).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

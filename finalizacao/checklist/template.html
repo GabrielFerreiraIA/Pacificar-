@@ -1,0 +1,539 @@
+<title>Finalização Pacificar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=JetBrains+Mono:wght@500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
+<style>
+  :root {
+    --bg: #f7f5f0;
+    --surface: #ffffff;
+    --surface-2: #fffdf9;
+    --line: #e6e2d8;
+    --line-soft: #f0ede5;
+    --ink: #16211c;
+    --ink-2: #4f5d55;
+    --ink-3: #6e7c75;
+    --leaf: #2d6b48;
+    --leaf-strong: #245539;
+    --leaf-soft: #e1efe6;
+    --ochre: #96612a;
+    --ochre-soft: #faedd8;
+    --lunar: #4c4e8c;
+    --lunar-soft: #e8e8f6;
+    --clay: #9d3030;
+    --clay-soft: #fae4e2;
+    --track: #ebe7dd;
+    --on-accent: #ffffff;
+    --font-display: "Fraunces", "Iowan Old Style", Georgia, serif;
+    --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #111814;
+      --surface: #18211c;
+      --surface-2: #1b251f;
+      --line: #2a372f;
+      --line-soft: #212c25;
+      --ink: #e7eee9;
+      --ink-2: #b1bfb6;
+      --ink-3: #8a9a90;
+      --leaf: #7cc39a;
+      --leaf-strong: #9bd6b3;
+      --leaf-soft: #1d3327;
+      --ochre: #e3ac6c;
+      --ochre-soft: #372816;
+      --lunar: #aeb0ec;
+      --lunar-soft: #25264a;
+      --clay: #eb9090;
+      --clay-soft: #3b1f1f;
+      --track: #243029;
+      --on-accent: #0f1a14;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #111814;
+    --surface: #18211c;
+    --surface-2: #1b251f;
+    --line: #2a372f;
+    --line-soft: #212c25;
+    --ink: #e7eee9;
+    --ink-2: #b1bfb6;
+    --ink-3: #8a9a90;
+    --leaf: #7cc39a;
+    --leaf-strong: #9bd6b3;
+    --leaf-soft: #1d3327;
+    --ochre: #e3ac6c;
+    --ochre-soft: #372816;
+    --lunar: #aeb0ec;
+    --lunar-soft: #25264a;
+    --clay: #eb9090;
+    --clay-soft: #3b1f1f;
+    --track: #243029;
+    --on-accent: #0f1a14;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .page {
+    max-width: 880px;
+    margin: 0 auto;
+    padding-inline: 20px;
+    padding-block: 40px 72px;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+  }
+  h1, h2, h3 { font-family: var(--font-display); font-weight: 500; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+  p { margin: 0; }
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.86em;
+    background: var(--line-soft);
+    border-radius: 5px;
+    padding: 1px 5px;
+    overflow-wrap: anywhere;
+  }
+  .eyebrow {
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .mono { font-family: var(--font-mono); font-size: 12.5px; font-weight: 500; font-variant-numeric: tabular-nums; }
+
+  /* ── Cabeçalho ───────────────────────────────────── */
+  .head { display: grid; grid-template-columns: 1fr auto; gap: 24px 40px; align-items: end; }
+  .head h1 { font-size: clamp(34px, 6vw, 46px); line-height: 1.05; margin-top: 10px; }
+  .head .lede { margin-top: 12px; color: var(--ink-2); max-width: 52ch; }
+  .score { text-align: right; }
+  .score .num { font-family: var(--font-display); font-size: 56px; line-height: 1; font-variant-numeric: tabular-nums; }
+  .score .num span { font-size: 22px; color: var(--ink-3); }
+  .score .pct { margin-top: 6px; color: var(--ink-3); font-size: 13px; font-variant-numeric: tabular-nums; }
+
+  .bar { display: flex; gap: 3px; height: 12px; }
+  .seg { position: relative; background: var(--track); border-radius: 3px; overflow: hidden; min-width: 6px; }
+  .seg > i { position: absolute; inset: 0 auto 0 0; background: var(--leaf); border-radius: 3px; transition: width .35s ease; }
+  .bar-legend { display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; color: var(--ink-3); flex-wrap: wrap; gap: 4px 16px; }
+
+  .sync { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--ink-3); }
+  .sync::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--ink-3); }
+  .sync[data-modo="nuvem"]::before { background: var(--leaf); }
+  .sync[data-modo="local"]::before, .sync[data-modo="leitura"]::before { background: var(--ochre); }
+  .sync[data-modo="erro"]::before { background: var(--clay); }
+
+  /* ── Liberadas agora ─────────────────────────────── */
+  .now { display: flex; flex-direction: column; gap: 14px; }
+  .now-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .now-head h2 { font-size: 24px; }
+  .lanes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .lane {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .lane-title { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 13.5px; }
+  .lane-title b { margin-left: auto; font-family: var(--font-mono); font-weight: 500; font-size: 12px; color: var(--ink-3); }
+  .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+  .lane ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  .lane li { display: grid; grid-template-columns: auto 1fr; gap: 8px; font-size: 13.5px; line-height: 1.35; }
+  .lane li a { color: inherit; text-decoration: none; }
+  .lane li a:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .lane .empty { color: var(--ink-3); font-size: 13px; }
+
+  /* ── Filtros ─────────────────────────────────────── */
+  .filters { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-2);
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 7px 14px;
+    cursor: pointer;
+  }
+  .chip:hover { border-color: var(--ink-3); }
+  .chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+  .chip:focus-visible, .check:focus-visible, summary:focus-visible, .lane a:focus-visible {
+    outline: 2px solid var(--leaf);
+    outline-offset: 2px;
+  }
+
+  /* ── Fases ───────────────────────────────────────── */
+  .phases { display: flex; flex-direction: column; gap: 36px; }
+  .phase-head { display: grid; grid-template-columns: auto 1fr auto; align-items: baseline; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+  .phase-head .n { font-family: var(--font-mono); font-size: 12px; color: var(--ink-3); }
+  .phase-head h3 { font-size: 22px; }
+  .phase-head .count { font-family: var(--font-mono); font-size: 12.5px; color: var(--ink-3); }
+  .phase-head .count.full { color: var(--leaf); }
+
+  .tasks { list-style: none; margin: 0; padding: 0; }
+  .task {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr);
+    gap: 14px;
+    padding: 16px 4px;
+    border-bottom: 1px solid var(--line-soft);
+    scroll-margin-top: 20px;
+  }
+  .task:target { background: var(--leaf-soft); border-radius: 10px; }
+  .check {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 24px;
+    height: 24px;
+    margin: 1px 0 0;
+    border: 2px solid var(--ink-3);
+    border-radius: 7px;
+    background: var(--surface);
+    cursor: pointer;
+    display: grid;
+    place-content: center;
+    transition: background .15s, border-color .15s;
+  }
+  .check::after {
+    content: "";
+    width: 11px;
+    height: 6px;
+    border-left: 2.5px solid var(--on-accent);
+    border-bottom: 2.5px solid var(--on-accent);
+    transform: rotate(-45deg) translate(1px, -1px) scale(0);
+    transition: transform .15s ease;
+  }
+  .check:checked { background: var(--leaf); border-color: var(--leaf); }
+  .check:checked::after { transform: rotate(-45deg) translate(1px, -1px) scale(1); }
+  .check:disabled { cursor: progress; opacity: .6; }
+  .task.done .title { color: var(--ink-3); text-decoration: line-through; text-decoration-color: var(--line); }
+
+  .t-line { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+  .t-line label { cursor: pointer; }
+  .t-id { color: var(--ink-3); }
+  .title { font-weight: 600; font-size: 15px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; margin-top: 8px; font-size: 12.5px; color: var(--ink-3); }
+  .owner { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px 2px 7px; border-radius: 999px; font-weight: 600; font-size: 12px; }
+  .owner .dot { width: 7px; height: 7px; }
+  .o-agente { background: var(--leaf-soft); color: var(--leaf-strong); }
+  .o-agente .dot, .d-agente { background: var(--leaf); }
+  .o-gabriel { background: var(--ochre-soft); color: var(--ochre); }
+  .o-gabriel .dot, .d-gabriel { background: var(--ochre); }
+  .o-ana { background: var(--lunar-soft); color: var(--lunar); }
+  .o-ana .dot, .d-ana { background: var(--lunar); }
+  .deps a { color: var(--ink-2); text-decoration: none; font-family: var(--font-mono); font-size: 12px; }
+  .deps a:hover { text-decoration: underline; }
+  .deps a.ok { color: var(--leaf); }
+  .wait { color: var(--ochre); font-weight: 600; }
+  .agent { padding: 2px 8px; border-radius: 6px; border: 1px dashed var(--line); font-size: 12px; }
+  .agent.andamento { border-color: var(--leaf); color: var(--leaf); }
+  .agent.concluida { border-style: solid; border-color: var(--leaf); color: var(--leaf); }
+  .agent.bloqueada { border-style: solid; border-color: var(--clay); color: var(--clay); background: var(--clay-soft); }
+  .stamp { color: var(--leaf); font-weight: 600; }
+
+  details { margin-top: 8px; }
+  summary { cursor: pointer; font-size: 12.5px; color: var(--ink-2); font-weight: 600; width: fit-content; list-style: none; }
+  summary::-webkit-details-marker { display: none; }
+  summary::before { content: "+ "; font-family: var(--font-mono); }
+  details[open] summary::before { content: "− "; }
+  details ul { margin: 8px 0 2px; padding-left: 18px; color: var(--ink-2); font-size: 13.5px; display: flex; flex-direction: column; gap: 5px; max-width: 68ch; }
+
+  .foot { color: var(--ink-3); font-size: 12.5px; border-top: 1px solid var(--line); padding-top: 16px; display: flex; flex-direction: column; gap: 6px; }
+
+  @media (max-width: 700px) {
+    .head { grid-template-columns: 1fr; }
+    .score { text-align: left; display: flex; align-items: baseline; gap: 12px; }
+    .score .num { font-size: 44px; }
+    .lanes { grid-template-columns: 1fr; }
+    .page { padding-inline: 16px; padding-block: 28px 56px; gap: 32px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition: none !important; }
+  }
+</style>
+
+<main class="page" id="app">
+  <header class="head">
+    <div>
+      <p class="eyebrow">Pacificar · Saúde integrativa &amp; Ayurveda</p>
+      <h1>Finalização do app</h1>
+      <p class="lede">Do protótipo ao produto vendido pela Kiwify, com login pelo Supabase e hospedagem na Vercel. Marque cada item depois de conferir que funciona.</p>
+    </div>
+    <div class="score">
+      <p class="num" id="num">0 <span>de 0</span></p>
+      <p class="pct" id="pct">0% validado</p>
+    </div>
+  </header>
+
+  <section aria-label="Progresso por fase">
+    <div class="bar" id="bar"></div>
+    <div class="bar-legend">
+      <span id="sync" class="sync" data-modo="conectando" role="status">Conectando…</span>
+      <span id="gerado"></span>
+    </div>
+  </section>
+
+  <section class="now" aria-labelledby="now-title">
+    <div class="now-head">
+      <h2 id="now-title">Liberadas agora</h2>
+      <p class="eyebrow">Tudo que já tem as dependências marcadas</p>
+    </div>
+    <div class="lanes" id="lanes"></div>
+  </section>
+
+  <section class="phases" aria-label="Tarefas por fase">
+    <div class="filters" id="filters" role="group" aria-label="Filtrar tarefas"></div>
+    <div id="phases" class="phases"></div>
+  </section>
+
+  <footer class="foot">
+    <p>A lista vem do arquivo <code>finalizacao/TAREFAS.md</code>. A etiqueta tracejada mostra o que os agentes registraram lá até a data de geração desta página. A sua marcação é a validação final.</p>
+    <p>Para atualizar a lista depois que um agente criar tarefas novas, peça numa sessão do Claude Code: "regenere e republique o checklist". As marcações ficam guardadas.</p>
+  </footer>
+</main>
+
+<script>
+const DADOS = "__DADOS__";
+
+const DONOS = {
+  gabriel: { rotulo: 'Você', classe: 'o-gabriel' },
+  ana: { rotulo: 'Ana', classe: 'o-ana' },
+  agente: { rotulo: 'Agente', classe: 'o-agente' }
+};
+const FILTROS = [
+  ['todas', 'Todas'],
+  ['pendentes', 'Pendentes'],
+  ['gabriel', 'Com você'],
+  ['ana', 'Com a Ana'],
+  ['agente', 'Agentes']
+];
+
+const tarefas = DADOS.tarefas;
+const porId = new Map(tarefas.map(t => [t.id, t]));
+const fases = [...new Set(tarefas.map(t => t.fase))];
+
+function lerLS(chave, padrao) {
+  try { const v = localStorage.getItem('pacificar-checklist:' + chave); return v ? JSON.parse(v) : padrao; }
+  catch { return padrao; }
+}
+function gravarLS(chave, valor) {
+  try { localStorage.setItem('pacificar-checklist:' + chave, JSON.stringify(valor)); } catch {}
+}
+
+let checks = lerLS('checks', {});
+let modo = 'conectando';
+let filtro = lerLS('filtro', 'todas');
+let db = null;
+const escrevendo = new Set();
+const abertos = new Set();
+
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const md = s => esc(s).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+const feita = id => Boolean(checks[id]);
+const pendentesDe = t => t.deps.filter(d => !feita(d));
+const dataCurta = iso => { try { return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }); } catch { return ''; } };
+
+function situacaoAgente(t) {
+  if (t.status === '~') return ['andamento', 'agente: ' + t.nota.replace(/^em andamento:\s*/, 'em andamento · ')];
+  if (t.status === 'x') return ['concluida', 'agente: ' + t.nota.replace(/^concluída:\s*/, 'concluiu · ')];
+  if (t.status === '!') return ['bloqueada', t.nota];
+  return null;
+}
+
+function faixa(t) {
+  if (t.donos.includes('gabriel')) return 'gabriel';
+  if (t.donos.includes('ana')) return 'ana';
+  return 'agente';
+}
+
+function passaFiltro(t) {
+  if (filtro === 'todas') return true;
+  if (filtro === 'pendentes') return !feita(t.id);
+  return t.donos.includes(filtro);
+}
+
+const TEXTO_SYNC = {
+  conectando: 'Conectando…',
+  nuvem: 'Salvo na sua conta · sincroniza entre dispositivos',
+  local: 'Salvando só neste navegador',
+  leitura: 'Somente leitura para você',
+  erro: 'Sem conexão com o armazenamento. As marcações podem não estar salvas.'
+};
+
+function render() {
+  const total = tarefas.length;
+  const feitas = tarefas.filter(t => feita(t.id)).length;
+  const pct = total ? Math.round((feitas / total) * 100) : 0;
+
+  document.getElementById('num').innerHTML = `${feitas} <span>de ${total}</span>`;
+  document.getElementById('pct').textContent = `${pct}% validado`;
+
+  document.getElementById('bar').innerHTML = fases.map(f => {
+    const ts = tarefas.filter(t => t.fase === f);
+    const ok = ts.filter(t => feita(t.id)).length;
+    return `<div class="seg" style="flex:${ts.length}" title="${esc(f)}: ${ok} de ${ts.length}"><i style="width:${(ok / ts.length) * 100}%"></i></div>`;
+  }).join('');
+
+  const sync = document.getElementById('sync');
+  sync.dataset.modo = modo;
+  sync.textContent = TEXTO_SYNC[modo];
+
+  // Liberadas agora: não marcadas, com todas as dependências marcadas
+  const livres = tarefas.filter(t => !feita(t.id) && pendentesDe(t).length === 0);
+  document.getElementById('lanes').innerHTML = ['gabriel', 'ana', 'agente'].map(dono => {
+    const itens = livres.filter(t => faixa(t) === dono);
+    const titulo = { gabriel: 'Com você', ana: 'Com a Ana', agente: 'Só agentes' }[dono];
+    return `<div class="lane">
+      <p class="lane-title"><span class="dot d-${dono}"></span>${titulo}<b>${itens.length}</b></p>
+      ${itens.length
+        ? `<ul>${itens.map(t => `<li><span class="mono t-id">${t.id}</span><a href="#${t.id}">${esc(t.titulo)}</a></li>`).join('')}</ul>`
+        : `<p class="empty">Nada liberado agora.</p>`}
+    </div>`;
+  }).join('');
+
+  document.getElementById('filters').innerHTML = FILTROS.map(([id, rotulo]) =>
+    `<button class="chip" type="button" data-filtro="${id}" aria-pressed="${filtro === id}">${rotulo}</button>`
+  ).join('');
+
+  document.getElementById('phases').innerHTML = fases.map(f => {
+    const ts = tarefas.filter(t => t.fase === f);
+    const visiveis = ts.filter(passaFiltro);
+    if (!visiveis.length) return '';
+    const ok = ts.filter(t => feita(t.id)).length;
+    const [num, ...resto] = f.split(' · ');
+    return `<section>
+      <div class="phase-head">
+        <span class="n">${esc(num)}</span>
+        <h3>${esc(resto.join(' · ') || num)}</h3>
+        <span class="count${ok === ts.length ? ' full' : ''}">${ok}/${ts.length}</span>
+      </div>
+      <ul class="tasks">${visiveis.map(linhaTarefa).join('')}</ul>
+    </section>`;
+  }).join('') || `<p class="empty" style="color:var(--ink-3)">Nenhuma tarefa neste filtro.</p>`;
+}
+
+function linhaTarefa(t) {
+  const marcada = feita(t.id);
+  const pend = pendentesDe(t);
+  const ag = situacaoAgente(t);
+  const bloqueio = modo === 'leitura' || escrevendo.has(t.id);
+  const donos = t.donos.map(d => `<span class="owner ${DONOS[d]?.classe ?? ''}"><span class="dot"></span>${DONOS[d]?.rotulo ?? esc(d)}</span>`).join('');
+  const deps = t.deps.length
+    ? `<span class="deps">depende de ${t.deps.map(d => `<a href="#${d}" class="${feita(d) ? 'ok' : ''}" title="${esc(porId.get(d)?.titulo ?? '')}">${d}</a>`).join(', ')}</span>`
+    : '';
+  return `<li class="task${marcada ? ' done' : ''}" id="${t.id}">
+    <input class="check" type="checkbox" id="c-${t.id}" data-id="${t.id}" ${marcada ? 'checked' : ''} ${bloqueio ? 'disabled' : ''}
+      aria-describedby="m-${t.id}">
+    <div>
+      <div class="t-line">
+        <span class="mono t-id">${t.id}</span>
+        <label class="title" for="c-${t.id}">${esc(t.titulo)}</label>
+      </div>
+      <div class="meta" id="m-${t.id}">
+        ${donos}
+        ${!marcada && pend.length ? `<span class="wait">aguardando ${pend.join(', ')}</span>` : deps}
+        ${ag ? `<span class="agent ${ag[0]}">${esc(ag[1])}</span>` : ''}
+        ${marcada && checks[t.id].em ? `<span class="stamp">validada em ${dataCurta(checks[t.id].em)}</span>` : ''}
+      </div>
+      ${t.detalhes.length ? `<details data-id="${t.id}" ${abertos.has(t.id) ? 'open' : ''}>
+        <summary>Detalhes e critério de aceite</summary>
+        <ul>${t.detalhes.map(d => `<li>${md(d)}</li>`).join('')}</ul>
+      </details>` : ''}
+    </div>
+  </li>`;
+}
+
+function renderMantendoFoco() {
+  const focado = document.activeElement?.id;
+  render();
+  if (focado) document.getElementById(focado)?.focus({ preventScroll: true });
+}
+
+async function alternar(id, marcar) {
+  const antes = checks[id];
+  const valor = { feito: true, em: new Date().toISOString() };
+  checks = { ...checks };
+  if (marcar) checks[id] = valor; else delete checks[id];
+
+  if (modo !== 'nuvem' || !db) {
+    gravarLS('checks', checks);
+    renderMantendoFoco();
+    return;
+  }
+
+  escrevendo.add(id);
+  renderMantendoFoco();
+  const ref = db.doc('checks/' + id);
+  const escrever = () => (marcar ? ref.set(valor) : ref.delete());
+  try {
+    try { await escrever(); }
+    catch (e) {
+      if (e?.code !== 'unavailable') throw e;
+      await new Promise(r => setTimeout(r, 600 + Math.random() * 600));
+      await escrever();
+    }
+    gravarLS('checks', checks);
+  } catch (e) {
+    checks = { ...checks };
+    if (antes) checks[id] = antes; else delete checks[id];
+    if (e?.code === 'invalid_argument') modo = 'leitura';
+    else modo = 'erro';
+  } finally {
+    escrevendo.delete(id);
+    renderMantendoFoco();
+  }
+}
+
+document.getElementById('app').addEventListener('change', e => {
+  const el = e.target;
+  if (el.matches('.check')) alternar(el.dataset.id, el.checked);
+});
+document.getElementById('app').addEventListener('click', e => {
+  const chip = e.target.closest('[data-filtro]');
+  if (!chip) return;
+  filtro = chip.dataset.filtro;
+  gravarLS('filtro', filtro);
+  render();
+});
+document.getElementById('app').addEventListener('toggle', e => {
+  const d = e.target;
+  if (d.tagName !== 'DETAILS') return;
+  if (d.open) abertos.add(d.dataset.id); else abertos.delete(d.dataset.id);
+}, true);
+
+document.getElementById('gerado').textContent =
+  'Lista gerada em ' + new Date(DADOS.geradoEm).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+render();
+
+(async () => {
+  try { db = (await window.claude?.use?.('db')) ?? null; } catch { db = null; }
+  if (!db) { modo = 'local'; render(); return; }
+  modo = 'nuvem';
+  render();
+  db.collection('checks').onSnapshot(snap => {
+    const novo = {};
+    snap.docs.forEach(d => {
+      const v = d.data();
+      if (v && v.feito) novo[d.id] = v;
+    });
+    // Enquanto uma escrita está em voo, mantém o estado otimista daquela tarefa
+    escrevendo.forEach(id => { if (checks[id]) novo[id] = checks[id]; else delete novo[id]; });
+    checks = novo;
+    gravarLS('checks', checks);
+    renderMantendoFoco();
+  }, () => { modo = 'erro'; render(); });
+})();
+</script>
