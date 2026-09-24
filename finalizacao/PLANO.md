@@ -46,12 +46,13 @@ Levar o protótipo atual (100% `localStorage`, sem login) a um produto vendável
 |---|---|---|
 | D1 | Login por **convite** (`auth.admin.inviteUserByEmail`) disparado pelo webhook | A pessoa define a própria senha, e não trafega senha por e-mail |
 | D2 | Reembolso/chargeback **suspende** o acesso (`profiles.access_status = 'revoked'`), não apaga | Preserva o histórico clínico e permite reativar |
-| D3 | Idempotência do webhook pela chave única `purchases.order_id` | A Kiwify reenvia eventos |
+| D3 | Idempotência do webhook pela chave única `purchases (order_id, event)` | A Kiwify reenvia eventos. Aprovação e reembolso chegam com o mesmo `order_id`, então a unicidade só por pedido descartaria o reembolso. |
 | D4 | Keep-alive com **duas fontes**: Vercel Cron diário + GitHub Actions a cada 12h | A Vercel Hobby só permite cron 1x/dia, com horário impreciso. A redundância garante margem folgada dentro da janela de 7 dias. |
 | D5 | O keep-alive faz **escrita e leitura reais** no Postgres, não só um ping HTTP | O Supabase mede "atividade de banco". Um ping sem query pode não contar. |
 | D6 | Áudios em `public/audio/` (mp3 mono 64 kbps), **não** no Supabase Storage | O plano gratuito do Supabase tem 5 GB/mês de egress. 100 pacientes × 21 áudios estouram isso. A Vercel tem 100 GB. |
 | D7 | Repositório **privado** no GitHub | Os outros repos do usuário são públicos. Este tem regra de negócio de cliente e config de pagamento. |
 | D8 | Questionário de doshas como módulo opcional fora da anamnese (`subScreen: 'doshas'`) | Aprovado na análise do áudio da cliente. Não pode contar no progresso da anamnese. |
+| D10 | Migrations aplicadas pela API de gestão do Supabase; o arquivo local usa a versão (timestamp) que o servidor gravou | Mantém `supabase/migrations/` e o histórico remoto iguais, para a CLI não reaplicar nada |
 | D9 | SMTP próprio (Resend, grátis até 3 mil e-mails/mês) no Supabase Auth | O SMTP padrão do Supabase só envia para membros da equipe e tem limite mínimo. Sem isso, o convite de compra não chega. |
 
 ## Riscos que o Gabriel precisa conhecer
@@ -94,7 +95,7 @@ alter table public.heartbeat enable row level security; -- sem policies: só a s
 | `compra_reembolsada`, `chargeback` | `access_status = 'revoked'`. |
 | demais | Só registra em `purchases`. |
 
-Toda chamada é registrada em `purchases` (`order_id` único, `event`, `email`, `payload jsonb`, `processed_at`, `error`). Responder **200 rapidamente** mesmo em evento ignorado. Responder 401 em assinatura inválida.
+Toda chamada é registrada em `purchases` (`(order_id, event)` único, `event`, `email`, `payload jsonb`, `processed_at`, `error`). Responder **200 rapidamente** mesmo em evento ignorado. Responder 401 em assinatura inválida.
 
 ## Trilhas de trabalho paralelo
 
