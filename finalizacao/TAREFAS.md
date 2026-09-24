@@ -40,7 +40,7 @@ Use os comandos em vez de editar à mão:  npm run tarefa -- iniciar|concluir|bl
   - **Rodar sozinha:** toca em quase todos os arquivos (ver PLANO.md → Trilhas).
   - Aceite: preencher a anamnese no celular e ver as respostas no notebook com o mesmo login.
   - Ciclos de desparasitação: criar em `parasite_cycles` no primeiro acesso com `buildParasiteCycles(journey_start_date, user_id)` de `src/lib/lunar.ts` (T-55).
-- [~] **T-15** Criar a conta de terapeuta da Ana (role admin) · @gabriel @agente · dep: T-12 · em andamento: claude (2026-09-24)
+- [!] **T-15** Criar a conta de terapeuta da Ana (role admin) · @gabriel @agente · dep: T-12 · bloqueada: scripts prontos e testados; falta o Gabriel confirmar o e-mail da Ana e rodar depois do deploy (T-04), para o link do convite abrir a URL real (2026-09-24)
   - Script `supabase/seed_admin.sql` parametrizado por e-mail. Nada de senha no repositório.
 
 ## Fase 2 · Autenticação
