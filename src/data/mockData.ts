@@ -235,11 +235,10 @@ export const DEFAULT_PRESCRIPTION: Prescription = {
   updated_at: '2026-08-28T14:00:00Z'
 };
 
-/** Ciclos da demo: as 5 próximas luas cheias a partir de hoje, calculadas (T-55). */
-export const DEFAULT_PARASITE_CYCLES: ParasiteCycle[] = buildParasiteCycles(
-  dataSaoPaulo(new Date()),
-  'usr_pacificar_01'
-);
+/** Ciclos da demo: as 5 próximas luas cheias a partir de hoje, calculadas (T-55).
+ *  Função (e não constante) para o módulo não ter efeito no topo e sair do bundle de produção (T-56). */
+export const demoParasiteCycles = (): ParasiteCycle[] =>
+  buildParasiteCycles(dataSaoPaulo(new Date()), 'usr_pacificar_01');
 
 export const OTHER_PATIENTS_LIST: UserProfile[] = [
   {

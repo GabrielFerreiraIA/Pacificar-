@@ -191,7 +191,7 @@ export const CheckinNightlyPage: React.FC<CheckinNightlyPageProps> = ({
 
     saveDailyCheckin({
       day_number: dayNumber,
-      user_id: 'usr_pacificar_01',
+      user_id: '', // o contexto preenche com o usuário logado
       energy_rating: energy,
       sleep_quality: sleep,
       bloating_level: bloating,

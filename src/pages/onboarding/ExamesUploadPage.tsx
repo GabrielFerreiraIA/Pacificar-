@@ -118,7 +118,7 @@ export const ExamesUploadPage: React.FC<ExamesUploadPageProps> = ({ onClose }) =
     // Demonstração local (sem login): só registra na tela
     if (!userId) {
       uploadLabExam({
-        user_id: currentUser?.id ?? 'usr_pacificar_01',
+        user_id: currentUser?.id ?? '',
         file_name: fileName.trim(),
         file_url: '#',
         exam_date: examDate || new Date().toISOString().slice(0, 10),

@@ -7,15 +7,7 @@ import {
   Prescription,
   ParasiteCycle
 } from '../types';
-import {
-  DEFAULT_USER_PROFILE,
-  DEFAULT_ADMIN_PROFILE,
-  DEFAULT_LAB_EXAMS,
-  DEFAULT_CHECKINS,
-  DEFAULT_PRESCRIPTION,
-  DEFAULT_PARASITE_CYCLES,
-  OTHER_PATIENTS_LIST
-} from '../data/mockData';
+import { DEMO } from '../data/demo';
 import { getProfile } from '../lib/api/profile';
 import { getAnamnese, type AnamneseRecord } from '../lib/api/anamnese';
 import { listCheckins } from '../lib/api/checkins';
@@ -151,12 +143,13 @@ function gravarJSON(key: string, value: unknown) {
 }
 
 function snapshotDemo(): Snapshot {
+  if (!DEMO) return EMPTY_SNAPSHOT; // produção: não existe demonstração
   return {
-    currentUser: lerJSON(STORAGE_KEYS.USER, DEFAULT_USER_PROFILE),
-    labExams: lerJSON(STORAGE_KEYS.EXAMS, DEFAULT_LAB_EXAMS),
-    checkins: lerJSON(STORAGE_KEYS.CHECKINS, DEFAULT_CHECKINS),
-    prescription: lerJSON(STORAGE_KEYS.PRESCRIPTION, DEFAULT_PRESCRIPTION),
-    parasiteCycles: lerJSON(STORAGE_KEYS.PARASITE, DEFAULT_PARASITE_CYCLES),
+    currentUser: lerJSON(STORAGE_KEYS.USER, DEMO.DEFAULT_USER_PROFILE),
+    labExams: lerJSON(STORAGE_KEYS.EXAMS, DEMO.DEFAULT_LAB_EXAMS),
+    checkins: lerJSON(STORAGE_KEYS.CHECKINS, DEMO.DEFAULT_CHECKINS),
+    prescription: lerJSON(STORAGE_KEYS.PRESCRIPTION, DEMO.DEFAULT_PRESCRIPTION),
+    parasiteCycles: lerJSON(STORAGE_KEYS.PARASITE, DEMO.demoParasiteCycles()),
     zeoliteLoggedDays: lerJSON(STORAGE_KEYS.ZEOLITE, [1, 2, 3, 4, 5, 6]),
     anamnese: { ...EMPTY_ANAMNESE, ...lerJSON<Partial<AnamneseRecord>>(STORAGE_KEYS.ANAMNESE, {}) },
     preparoChecked: lerJSON(STORAGE_KEYS.PREPARO, [])
@@ -197,8 +190,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, authRole, au
     lerJSON(STORAGE_KEYS.DAY, isDemo ? 6 : (inicial.currentUser?.current_day ?? 1))
   );
 
-  const [patientsList] = useState<UserProfile[]>(OTHER_PATIENTS_LIST);
-  const [activePatientIdForAdmin, setActivePatientIdForAdmin] = useState<string>('usr_pacificar_01');
+  const [patientsList] = useState<UserProfile[]>(() => DEMO?.OTHER_PATIENTS_LIST ?? []);
+  const [activePatientIdForAdmin, setActivePatientIdForAdmin] = useState<string>(() => DEMO?.OTHER_PATIENTS_LIST[0]?.id ?? '');
 
   const [syncing, setSyncing] = useState(!isDemo);
   const [syncError, setSyncError] = useState<string | null>(null);
@@ -431,12 +424,12 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, authRole, au
   };
 
   const login = (email: string, role: UserRole = 'patient', name?: string) => {
-    if (!isDemo) return; // login real: tela de acesso (T-21)
+    if (!isDemo || !DEMO) return; // login real: tela de acesso (T-21)
     if (role === 'admin' || email.includes('admin') || email.includes('anacarla')) {
-      setCurrentUser(DEFAULT_ADMIN_PROFILE);
+      setCurrentUser(DEMO.DEFAULT_ADMIN_PROFILE);
     } else {
       const user: UserProfile = {
-        ...DEFAULT_USER_PROFILE,
+        ...DEMO.DEFAULT_USER_PROFILE,
         email,
         full_name: name || email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1)
       };
@@ -451,8 +444,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, authRole, au
 
   const switchRole = (newRole: UserRole) => {
     // Com login real o papel vem do banco: trocar pelo app não é permitido
-    if (!isDemo) return;
-    setCurrentUser(newRole === 'admin' ? DEFAULT_ADMIN_PROFILE : DEFAULT_USER_PROFILE);
+    if (!isDemo || !DEMO) return;
+    setCurrentUser(newRole === 'admin' ? DEMO.DEFAULT_ADMIN_PROFILE : DEMO.DEFAULT_USER_PROFILE);
   };
 
   const togglePreparoItem = (id: string) => {
@@ -573,11 +566,12 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, authRole, au
       setReloadKey(k => k + 1);
       return;
     }
-    setCurrentUser(DEFAULT_USER_PROFILE);
-    setLabExams(DEFAULT_LAB_EXAMS);
-    setCheckins(DEFAULT_CHECKINS);
-    setPrescription(DEFAULT_PRESCRIPTION);
-    setParasiteCycles(DEFAULT_PARASITE_CYCLES);
+    if (!DEMO) return;
+    setCurrentUser(DEMO.DEFAULT_USER_PROFILE);
+    setLabExams(DEMO.DEFAULT_LAB_EXAMS);
+    setCheckins(DEMO.DEFAULT_CHECKINS);
+    setPrescription(DEMO.DEFAULT_PRESCRIPTION);
+    setParasiteCycles(DEMO.demoParasiteCycles());
     setZeoliteLoggedDays([1, 2, 3, 4, 5, 6]);
     setAnamnese(EMPTY_ANAMNESE);
     anamneseRef.current = EMPTY_ANAMNESE;
