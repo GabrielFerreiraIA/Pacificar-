@@ -33,7 +33,7 @@ Use os comandos em vez de editar à mão:  npm run tarefa -- iniciar|concluir|bl
 - [x] **T-12** Políticas RLS (paciente vê só o próprio, terapeuta vê tudo) · @agente · dep: T-11 · concluída: claude (2026-09-24)
   - Função `is_admin()` com `security definer`. Toda tabela com RLS ligada. `purchases` e `heartbeat` sem policy (só service role).
   - Aceite: script SQL de teste prova que o paciente A não lê dados do paciente B.
-- [~] **T-13** Bucket privado `exames` no Storage com policies por pasta do usuário · @agente · dep: T-12 · em andamento: claude (2026-09-24)
+- [x] **T-13** Bucket privado `exames` no Storage com policies por pasta do usuário · @agente · dep: T-12 · concluída: claude (2026-09-24)
   - Caminho `{user_id}/{arquivo}`. Leitura por signed URL. Limite de 10 MB, só PDF/JPG/PNG/HEIC.
 - [ ] **T-14** Migrar o AppContext de localStorage para Supabase · @agente · dep: T-12, T-21
   - Camada `src/lib/api/*.ts` por entidade. `localStorage` vira só cache offline. Auto-save da anamnese com debounce.
@@ -82,6 +82,7 @@ Use os comandos em vez de editar à mão:  npm run tarefa -- iniciar|concluir|bl
 
 - [ ] **T-50** Upload real de exames para o Storage · @agente · dep: T-13, T-14
   - Substitui `file_url: '#'` em `ExamesUploadPage.tsx`. Progresso de envio e tratamento de erro.
+  - **Plano grátis:** comprimir fotos no aparelho (canvas → WebP/JPEG, lado maior 1600 px, qualidade ~0,8) antes de enviar. PDF vai como está. Mostrar a cota (20 arquivos) quando chegar perto (ver D11).
 - [ ] **T-51** Ana grava os 21 áudios da jornada · @ana · dep: —
   - Roteiros prontos em `src/data/journeyDays.ts` (`audio_transcript`). Entrega em mp3 ou m4a, um arquivo por dia.
 - [ ] **T-52** Player com áudio real (mantendo a voz sintética como reserva) · @agente · dep: T-51
