@@ -48,7 +48,7 @@ Use os comandos em vez de editar à mão:  npm run tarefa -- iniciar|concluir|bl
 - [ ] **T-20** SMTP próprio (Resend) no Supabase e e-mails em português · @gabriel @agente · dep: T-10
   - Gabriel cria a conta no Resend e verifica o domínio. O agente escreve os templates HTML de convite e de recuperação de senha em `supabase/templates/`.
   - Aceite: um convite enviado pelo painel chega na caixa de entrada, não no spam.
-- [ ] **T-21** Telas de login, esqueci a senha e definir senha · @agente · dep: T-10
+- [~] **T-21** Telas de login, esqueci a senha e definir senha · @agente · dep: T-10 · em andamento: claude (2026-09-24)
   - E-mail + senha, recuperação, rota `/definir-senha` (convite e reset), logout no menu. Seguir o design system de `src/components/ui/Primitives.tsx`.
 - [ ] **T-22** Guarda de sessão e remoção do "Modo de demonstração" · @agente · dep: T-21
   - Sem sessão, só a tela de login renderiza. `role` vem de `profiles.role`. O menu "Modo de demonstração" (`AppHeader.tsx`) só existe com `import.meta.env.DEV`.
