@@ -132,7 +132,8 @@ function usePainel() {
         anamneseCompleted: app.anamnese.completed,
         exams: app.labExams.length,
         examsToReview: app.labExams.filter(e => !e.therapist_reviewed).length,
-        checkins: app.checkins.length
+        checkins: app.checkins.length,
+        deletionRequest: null
       })),
     [app.patientsList, app.anamnese, app.labExams, app.checkins]
   );
@@ -341,6 +342,11 @@ export const AdminDashboardPage: React.FC = () => {
                         Dia {p.current_day} de 21 · {p.weight != null ? `${p.weight} kg` : 'peso não informado'}
                       </span>
                       <span className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                        {s.deletionRequest && (
+                          <span className="inline-flex items-center gap-1 rounded-full border border-clay-100 bg-clay-50 px-2 py-0.5 text-[10.5px] font-semibold text-clay-600">
+                            Pediu exclusão
+                          </span>
+                        )}
                         {suspensa && (
                           <span className="inline-flex items-center gap-1 rounded-full border border-clay-100 bg-clay-50 px-2 py-0.5 text-[10.5px] font-semibold text-clay-600">
                             Acesso suspenso
@@ -386,6 +392,14 @@ export const AdminDashboardPage: React.FC = () => {
             title={nomeDe(ativo)}
             hint={`${ativo.profile.email}${ativo.profile.phone ? ` · ${ativo.profile.phone}` : ''}`}
           />
+
+          {ativo.deletionRequest && (
+            <p role="note" className="rounded-field border border-clay-100 bg-clay-50 px-4 py-3 text-[13px] leading-relaxed text-clay-600">
+              <strong>Pedido de exclusão</strong> em {new Date(ativo.deletionRequest.created_at).toLocaleDateString('pt-BR')}
+              {ativo.deletionRequest.reason ? `. Motivo: "${ativo.deletionRequest.reason}"` : ''}. Confirme com a paciente e conclua
+              pelo painel do Supabase (passo a passo no manual).
+            </p>
+          )}
 
           <div role="tablist" aria-label="Seções do prontuário" className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
             {(

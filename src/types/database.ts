@@ -147,6 +147,41 @@ export type Database = {
           },
         ]
       }
+      deletion_requests: {
+        Row: {
+          created_at: string
+          handled_at: string | null
+          id: number
+          reason: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          handled_at?: string | null
+          id?: never
+          reason?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          handled_at?: string | null
+          id?: never
+          reason?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deletion_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dosha_results: {
         Row: {
           answers: Json

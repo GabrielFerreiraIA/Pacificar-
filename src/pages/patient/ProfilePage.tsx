@@ -1,5 +1,6 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
+import { MeusDadosSection } from './MeusDadosSection';
 import { Button, Card, EmptyState, Pill, SectionTitle } from '../../components/ui/Primitives';
 import {
   ClipboardList,
@@ -28,7 +29,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
   onOpenExams,
   onOpenReport
 }) => {
-  const { currentUser, prescription, anamnese, labExams, checkins, resetToDefaultData } =
+  const { currentUser, prescription, anamnese, labExams, checkins, resetToDefaultData, userId } =
     useApp();
 
   const initials = (currentUser?.full_name ?? 'P')
@@ -192,16 +193,6 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
           </Card>
         ) : (
           <div className="space-y-2">
-            {prescription.therapist_notes.trim() && (
-              <Card className="space-y-2.5 border-leaf-200 bg-leaf-50/60">
-                <p className="eyebrow">Recado da Ana</p>
-                <p className="whitespace-pre-line text-[14px] leading-relaxed text-ink">
-                  {prescription.therapist_notes}
-                </p>
-                <p className="text-[12px] text-ink-3">Ana Carla Nesi · CRP 17/2833</p>
-              </Card>
-            )}
-
             <Card className="space-y-4">
               <div className="flex items-start gap-3.5">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-leaf-50 text-leaf-600">
@@ -300,7 +291,10 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
         )}
       </section>
 
-      {/* ── Ações da conta ────────────────────────────────────── */}
+      {/* ── Seus dados (LGPD) ou, na demonstração, reset dos dados de teste ── */}
+      {userId ? (
+        <MeusDadosSection userId={userId} />
+      ) : (
       <section className="space-y-3 border-t border-line pt-6">
         <SectionTitle eyebrow="Demonstração" title="Dados de teste" />
         <Card className="flex items-center gap-4">
@@ -326,6 +320,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
           </Button>
         </Card>
       </section>
+      )}
     </div>
   );
 };
