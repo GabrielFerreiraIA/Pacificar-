@@ -1,3 +1,4 @@
+import { buildParasiteCycles, dataSaoPaulo } from '../lib/lunar';
 import { UserProfile, AnamneseData, LabExamFile, DailyCheckin, Prescription, ParasiteCycle } from '../types';
 
 export const DEFAULT_USER_PROFILE: UserProfile = {
@@ -234,73 +235,11 @@ export const DEFAULT_PRESCRIPTION: Prescription = {
   updated_at: '2026-08-28T14:00:00Z'
 };
 
-export const DEFAULT_PARASITE_CYCLES: ParasiteCycle[] = [
-  {
-    id: 'cycle_1',
-    user_id: 'usr_pacificar_01',
-    cycle_number: 1,
-    moon_name: 'Ciclo 01: Lua Cheia de Setembro',
-    moon_date: '2026-09-18',
-    day1_completed: false,
-    day2_completed: false,
-    day3_completed: false,
-    charcoal_taken: false,
-    h2o2_taken: false,
-    completed: false
-  },
-  {
-    id: 'cycle_2',
-    user_id: 'usr_pacificar_01',
-    cycle_number: 2,
-    moon_name: 'Ciclo 02: Lua Cheia de Outubro',
-    moon_date: '2026-10-17',
-    day1_completed: false,
-    day2_completed: false,
-    day3_completed: false,
-    charcoal_taken: false,
-    h2o2_taken: false,
-    completed: false
-  },
-  {
-    id: 'cycle_3',
-    user_id: 'usr_pacificar_01',
-    cycle_number: 3,
-    moon_name: 'Ciclo 03: Lua Cheia de Novembro',
-    moon_date: '2026-11-15',
-    day1_completed: false,
-    day2_completed: false,
-    day3_completed: false,
-    charcoal_taken: false,
-    h2o2_taken: false,
-    completed: false
-  },
-  {
-    id: 'cycle_4',
-    user_id: 'usr_pacificar_01',
-    cycle_number: 4,
-    moon_name: 'Ciclo 04: Lua Cheia de Dezembro',
-    moon_date: '2026-12-14',
-    day1_completed: false,
-    day2_completed: false,
-    day3_completed: false,
-    charcoal_taken: false,
-    h2o2_taken: false,
-    completed: false
-  },
-  {
-    id: 'cycle_5',
-    user_id: 'usr_pacificar_01',
-    cycle_number: 5,
-    moon_name: 'Ciclo 05: Lua Cheia de Janeiro',
-    moon_date: '2027-01-13',
-    day1_completed: false,
-    day2_completed: false,
-    day3_completed: false,
-    charcoal_taken: false,
-    h2o2_taken: false,
-    completed: false
-  }
-];
+/** Ciclos da demo: as 5 próximas luas cheias a partir de hoje, calculadas (T-55). */
+export const DEFAULT_PARASITE_CYCLES: ParasiteCycle[] = buildParasiteCycles(
+  dataSaoPaulo(new Date()),
+  'usr_pacificar_01'
+);
 
 export const OTHER_PATIENTS_LIST: UserProfile[] = [
   {

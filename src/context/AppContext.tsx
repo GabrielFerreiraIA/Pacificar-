@@ -71,7 +71,7 @@ const STORAGE_KEYS = {
   EXAMS: 'pacificar_exams_v1',
   CHECKINS: 'pacificar_checkins_v1',
   PRESCRIPTION: 'pacificar_prescription_v1',
-  PARASITE: 'pacificar_parasite_v1',
+  PARASITE: 'pacificar_parasite_v2', // v2: datas lunares calculadas (T-55)
   ZEOLITE: 'pacificar_zeolite_v1',
   DAY: 'pacificar_selected_day_v1'
 };

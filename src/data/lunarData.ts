@@ -1,16 +1,3 @@
-export interface LunarCycleItem {
-  id: string;
-  cycle_number: number;
-  name: string;
-  moon_phase: string;
-  dates_range: string;
-  status: 'completed' | 'in_progress' | 'upcoming';
-  day1_completed: boolean;
-  day2_completed: boolean;
-  day3_completed: boolean;
-  charcoal_taken: boolean;
-}
-
 export const ZEOLITE_PROTOCOL_INFO = {
   total_days: 120,
   substance: 'Zeólita Clinoptilolita Micronizada Pura',
@@ -23,69 +10,6 @@ export const ZEOLITE_PROTOCOL_INFO = {
   ],
   metals_chelated: ['Chumbo (Pb)', 'Mercúrio (Hg)', 'Cádmio (Cd)', 'Alumínio (Al)', 'Agrotóxicos']
 };
-
-export const PARASITE_LUNAR_CYCLES_2025_2026: LunarCycleItem[] = [
-  {
-    id: 'lunar_c1',
-    cycle_number: 1,
-    name: 'Ciclo 01: Limpeza Inicial & Quebra do Biofilme',
-    moon_phase: 'Lua Cheia de Outubro',
-    dates_range: '13 a 15 de Outubro de 2025',
-    status: 'completed',
-    day1_completed: true,
-    day2_completed: true,
-    day3_completed: true,
-    charcoal_taken: true
-  },
-  {
-    id: 'lunar_c2',
-    cycle_number: 2,
-    name: 'Ciclo 02: Eliminação de Formas Adultas',
-    moon_phase: 'Lua Cheia de Novembro',
-    dates_range: '11 a 13 de Novembro de 2025',
-    status: 'in_progress',
-    day1_completed: true,
-    day2_completed: false,
-    day3_completed: false,
-    charcoal_taken: true
-  },
-  {
-    id: 'lunar_c3',
-    cycle_number: 3,
-    name: 'Ciclo 03: Varredura de Ovos & Cistos Remanescentes',
-    moon_phase: 'Lua Cheia de Dezembro',
-    dates_range: '14 a 16 de Dezembro de 2025',
-    status: 'upcoming',
-    day1_completed: false,
-    day2_completed: false,
-    day3_completed: false,
-    charcoal_taken: false
-  },
-  {
-    id: 'lunar_c4',
-    cycle_number: 4,
-    name: 'Ciclo 04: Purificação Sistêmica & Tecidos Profundos',
-    moon_phase: 'Lua Cheia de Janeiro',
-    dates_range: '12 a 14 de Janeiro de 2026',
-    status: 'upcoming',
-    day1_completed: false,
-    day2_completed: false,
-    day3_completed: false,
-    charcoal_taken: false
-  },
-  {
-    id: 'lunar_c5',
-    cycle_number: 5,
-    name: 'Ciclo 05: Selagem do Terreno Biológico & Consolidação',
-    moon_phase: 'Lua Cheia de Fevereiro',
-    dates_range: '10 a 12 de Fevereiro de 2026',
-    status: 'upcoming',
-    day1_completed: false,
-    day2_completed: false,
-    day3_completed: false,
-    charcoal_taken: false
-  }
-];
 
 export const IVERMECTIN_POSOLOGY_TABLE = [
   {
