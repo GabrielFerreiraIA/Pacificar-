@@ -73,7 +73,7 @@ Use os comandos em vez de editar à mão:  npm run tarefa -- iniciar|concluir|bl
 - [x] **T-40** Função `api/keepalive.ts` com escrita e leitura na tabela `heartbeat` · @agente · dep: T-11 · concluída: claude (2026-09-24)
   - Protegida por `CRON_SECRET`. Especificação completa no PLANO.md → "Keep-alive em detalhe".
 - [x] **T-41** Cron diário na Vercel (`vercel.json`) · @agente · dep: T-40 · concluída: claude (2026-09-24)
-- [~] **T-42** Cron redundante a cada 12h no GitHub Actions · @agente @gabriel · dep: T-40, T-01 · em andamento: claude (2026-09-24)
+- [!] **T-42** Cron redundante a cada 12h no GitHub Actions · @agente @gabriel · dep: T-40, T-01 · bloqueada: workflow pronto; falta o Gabriel cadastrar os secrets CRON_SECRET e APP_URL no GitHub (depende da T-01 e da T-04) (2026-09-24)
   - O agente escreve `.github/workflows/keepalive.yml`. O Gabriel cadastra os secrets `CRON_SECRET` e `APP_URL` no GitHub.
 - [ ] **T-43** Validar 7 dias seguidos de heartbeat sem acesso humano · @gabriel · dep: T-41, T-42
   - Aceite: `select source, date(created_at), count(*) from heartbeat group by 1,2` mostra as duas fontes em todos os dias.
