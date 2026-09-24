@@ -1,20 +1,31 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# PACIFICAR — Saúde Integrativa & Ayurveda
 
-# Run and deploy your AI Studio app
+PWA da terapeuta **Ana Carla Nesi**: jornada de 21 dias com anamnese, check-in diário, nutrição e protocolos.
 
-This contains everything you need to run your app locally.
+**Stack:** Vite + React 19 + TypeScript + Tailwind 4 + vite-plugin-pwa · Supabase (Postgres, Auth, Storage) · Vercel (front + funções em `api/`) · venda pela Kiwify.
 
-View your app in AI Studio: https://ai.studio/apps/4d250115-6c81-4ef8-9afc-53e438ef4450
+## Rodar localmente
 
-## Run Locally
+Pré-requisito: Node.js 20+.
 
-**Prerequisites:**  Node.js
+```bash
+npm install          # também ativa os git hooks do projeto
+cp .env.example .env.local   # preencha com as chaves do Supabase
+npm run dev          # http://localhost:3000
+```
 
+| Comando | O que faz |
+|---|---|
+| `npm run dev` | Servidor de desenvolvimento |
+| `npm run build` | Build de produção em `dist/` |
+| `npm run lint` | Checagem de tipos (TypeScript) |
+| `npm run status` | Progresso da finalização |
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Variáveis de ambiente
+
+Veja [.env.example](.env.example) e a tabela em [finalizacao/PLANO.md](finalizacao/PLANO.md#variáveis-de-ambiente).
+Variáveis `VITE_*` vão para o navegador: nunca coloque segredo nelas. A `SUPABASE_SERVICE_ROLE_KEY` só existe nas funções de `api/`.
+
+## Para agentes e colaboradores
+
+Leia [AGENTS.md](AGENTS.md) antes de mexer no código. O que falta fazer está em [finalizacao/TAREFAS.md](finalizacao/TAREFAS.md).

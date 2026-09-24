@@ -1,11 +1,16 @@
 node_modules/
 build/
 dist/
+dev-dist/
 coverage/
 .DS_Store
 *.log
 .env*
+.env.local
 !.env.example
+.vercel/
+supabase/.temp/
+backups/
 
 # Registro automático local das sessões do Claude Code
 finalizacao/logs/.sessoes.jsonl

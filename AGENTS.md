@@ -51,7 +51,7 @@ Ajuste fora de qualquer tarefa: commit com `[infra]` ou `[docs]` e log com `npm 
 |---|---|
 | `npm run dev` | App em http://localhost:3000 |
 | `npm run build` | Build de produção |
-| `npm run lint` | Typecheck. Até a T-03, rode `node ./node_modules/typescript/bin/tsc --noEmit`, porque o `&` no nome da pasta quebra o `npx`. |
+| `npm run lint` | Typecheck. Os scripts chamam `node ./node_modules/...` direto, porque o `&` no nome da pasta quebra o `npx` e o `.bin` do npm no Windows. |
 | `npm run status` | Progresso, tarefas em andamento, bloqueadas e prontas |
 | `npm run tarefa -- <iniciar\|concluir\|bloquear\|liberar> T-NN ...` | Muda o status de uma tarefa |
 | `npm run log -- T-NN <agente>` | Cria o log da sessão com commits e arquivos já preenchidos |
