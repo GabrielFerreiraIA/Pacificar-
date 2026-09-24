@@ -8,6 +8,7 @@ import { AppProvider, useApp } from './context/AppContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LoginPage, SetPasswordPage } from './pages/auth/AuthScreens';
 import { SuspendedPage } from './pages/auth/SuspendedPage';
+import { ConsentGate } from './pages/onboarding/ConsentGate';
 import { Logo } from './components/ui/Primitives';
 import { AppHeader } from './components/layout/AppHeader';
 import { BottomNav } from './components/layout/BottomNav';
@@ -209,7 +210,7 @@ const AuthGate: React.FC = () => {
   // Reembolso/chargeback (T-23). O RLS já bloqueia a escrita; aqui é a tela acolhedora.
   if (session && profile?.access_status === 'revoked') return <SuspendedPage />;
 
-  return (
+  const app = (
     <AppProvider
       key={session?.user.id ?? 'demo'}
       authUserId={session?.user.id}
@@ -218,6 +219,12 @@ const AuthGate: React.FC = () => {
       <AppContent />
     </AppProvider>
   );
+
+  // Paciente só entra depois de aceitar o termo (T-60 · LGPD)
+  if (session && profile?.role === 'patient') {
+    return <ConsentGate userId={session.user.id}>{app}</ConsentGate>;
+  }
+  return app;
 };
 
 export default function App() {

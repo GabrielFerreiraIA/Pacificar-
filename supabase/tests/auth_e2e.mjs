@@ -6,6 +6,7 @@
 import puppeteer from 'puppeteer-core';
 import { randomBytes } from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
+import { aceitarTermo } from './_util.mjs';
 
 const BASE = 'http://localhost:4173';
 const admin = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
@@ -17,6 +18,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 const { data: u, error } = await admin.auth.admin.createUser({ email, password: p1, email_confirm: true });
 if (error) throw error;
+await aceitarTermo(admin, u.user.id);
 const browser = await puppeteer.launch({ executablePath: process.env.CHROME_PATH ?? 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true });
 try {
   const ctx = await browser.createBrowserContext();

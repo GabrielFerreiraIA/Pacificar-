@@ -4,6 +4,7 @@
 import puppeteer from 'puppeteer-core';
 import { randomBytes } from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
+import { aceitarTermo } from './_util.mjs';
 
 const BASE = 'http://localhost:4173';
 const admin = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
@@ -23,6 +24,7 @@ for (const c of Object.values(contas)) {
   const { data, error } = await admin.auth.admin.createUser({ email: c.email, password: c.senha, email_confirm: true });
   if (error) throw error;
   c.id = data.user.id;
+  await aceitarTermo(admin, c.id);
 }
 const P = contas.paciente.id;
 await admin.from('profiles').update({ role: 'admin', full_name: 'Ana Teste' }).eq('id', contas.ana.id);
