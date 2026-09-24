@@ -93,7 +93,7 @@ Use os comandos em vez de editar à mão:  npm run tarefa -- iniciar|concluir|bl
 - [ ] **T-54** Ana aprova o questionário de doshas (prakriti, perguntas autorais) · @ana · dep: —
 - [x] **T-55** Datas lunares calculadas em vez de fixas · @agente · dep: — · concluída: claude (2026-09-24)
   - Hoje param em janeiro/2027 (`src/data/mockData.ts`). Calcular as luas cheias por algoritmo ou gerar tabela até 2030.
-- [~] **T-56** Remover dados fictícios e fotos do Unsplash do build de produção · @agente · dep: T-14 · em andamento: claude (2026-09-24)
+- [x] **T-56** Remover dados fictícios e fotos do Unsplash do build de produção · @agente · dep: T-14 · concluída: claude (2026-09-24)
   - `DEFAULT_*`, `OTHER_PATIENTS_LIST` e as URLs do Unsplash saem do bundle. Avatar com iniciais ou foto enviada pela Ana.
 - [x] **T-57** Painel da terapeuta com dados reais · @agente · dep: T-14, T-50 · concluída: claude (2026-09-24)
   - Lista de pacientes do banco, anamnese completa, check-ins, exames (signed URL), salvar prescrição.
