@@ -57,6 +57,31 @@ try {
   page = await entrar();
   ok((await navTexto(page)).includes('Clínica'), 'Terapeuta (role do banco) vê a aba Clínica');
   ok((await page.evaluate(() => document.body.innerText)).includes('Seus pacientes'), 'Terapeuta abre direto no painel');
+  await page.browserContext().close();
+
+  // ── Acesso suspenso (T-23): reembolso/chargeback ──
+  await admin.from('profiles').update({ role: 'patient', access_status: 'revoked' }).eq('id', u.user.id);
+  page = await (await browser.createBrowserContext()).newPage();
+  await page.setViewport({ width: 390, height: 844, isMobile: true });
+  await page.goto(BASE, { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('input[type=email]');
+  await page.type('input[type=email]', email);
+  await page.type('input[type=password]', senha);
+  await page.evaluate(() => [...document.querySelectorAll('button')].find(b => b.innerText.includes('Entrar'))?.click());
+  await page.waitForFunction(() => /pausad/i.test(document.body.innerText), { timeout: 20000 }).catch(() => {});
+  const t = await page.evaluate(() => document.body.innerText);
+  ok(t.includes('jornada está pausada'), 'Suspenso vê a tela de acesso pausado');
+  ok(!(await page.$('nav')), 'Suspenso não vê o app');
+  const href = await page.evaluate(() => document.querySelector('a[href*="wa.me"]')?.getAttribute('href') ?? '');
+  ok(href.includes('wa.me') && decodeURIComponent(href).includes(email), 'Botão de WhatsApp com a mensagem e o e-mail');
+  await page.evaluate(() => [...document.querySelectorAll('button')].find(b => b.innerText.includes('Sair'))?.click());
+  await page.waitForSelector('input[type=email]', { timeout: 10000 }).catch(() => {});
+  ok(!!(await page.$('input[type=email]')), 'Suspenso consegue sair');
+  await page.browserContext().close();
+
+  await admin.from('profiles').update({ access_status: 'active' }).eq('id', u.user.id);
+  page = await entrar();
+  ok(!!(await page.$('nav')), 'Reativado volta a entrar no app');
 } finally {
   await browser.close();
   await admin.auth.admin.deleteUser(u.user.id);

@@ -7,6 +7,7 @@ import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LoginPage, SetPasswordPage } from './pages/auth/AuthScreens';
+import { SuspendedPage } from './pages/auth/SuspendedPage';
 import { Logo } from './components/ui/Primitives';
 import { AppHeader } from './components/layout/AppHeader';
 import { BottomNav } from './components/layout/BottomNav';
@@ -205,6 +206,8 @@ const AuthGate: React.FC = () => {
   if (!session && !demo) {
     return <LoginPage onDemo={import.meta.env.DEV ? () => setDemo(true) : undefined} />;
   }
+  // Reembolso/chargeback (T-23). O RLS já bloqueia a escrita; aqui é a tela acolhedora.
+  if (session && profile?.access_status === 'revoked') return <SuspendedPage />;
 
   return (
     <AppProvider authRole={session ? (profile?.role ?? 'patient') : undefined}>
