@@ -35,7 +35,7 @@ Use os comandos em vez de editar à mão:  npm run tarefa -- iniciar|concluir|bl
   - Aceite: script SQL de teste prova que o paciente A não lê dados do paciente B.
 - [x] **T-13** Bucket privado `exames` no Storage com policies por pasta do usuário · @agente · dep: T-12 · concluída: claude (2026-09-24)
   - Caminho `{user_id}/{arquivo}`. Leitura por signed URL. Limite de 10 MB, só PDF/JPG/PNG/HEIC.
-- [~] **T-14** Migrar o AppContext de localStorage para Supabase · @agente · dep: T-12, T-21 · em andamento: claude (2026-09-24)
+- [x] **T-14** Migrar o AppContext de localStorage para Supabase · @agente · dep: T-12, T-21 · concluída: claude (2026-09-24)
   - Camada `src/lib/api/*.ts` por entidade. `localStorage` vira só cache offline. Auto-save da anamnese com debounce.
   - **Rodar sozinha:** toca em quase todos os arquivos (ver PLANO.md → Trilhas).
   - Aceite: preencher a anamnese no celular e ver as respostas no notebook com o mesmo login.
