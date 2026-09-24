@@ -90,7 +90,7 @@ Use os comandos em vez de editar à mão:  npm run tarefa -- iniciar|concluir|bl
 - [ ] **T-53** Questionário de doshas opcional · @agente · dep: T-54
   - Especificação na análise aprovada: `subScreen 'doshas'`, pré-preenchido pela anamnese, fora do progresso da anamnese, resultado separado de `prescription.dosha_predominant`.
 - [ ] **T-54** Ana aprova o questionário de doshas (prakriti, perguntas autorais) · @ana · dep: —
-- [ ] **T-55** Datas lunares calculadas em vez de fixas · @agente · dep: —
+- [~] **T-55** Datas lunares calculadas em vez de fixas · @agente · dep: — · em andamento: claude (2026-09-24)
   - Hoje param em janeiro/2027 (`src/data/mockData.ts`). Calcular as luas cheias por algoritmo ou gerar tabela até 2030.
 - [ ] **T-56** Remover dados fictícios e fotos do Unsplash do build de produção · @agente · dep: T-14
   - `DEFAULT_*`, `OTHER_PATIENTS_LIST` e as URLs do Unsplash saem do bundle. Avatar com iniciais ou foto enviada pela Ana.
