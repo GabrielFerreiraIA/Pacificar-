@@ -73,6 +73,8 @@ export default defineConfig(() => {
       aistudioMediaPlugin(),
       VitePWA({
         registerType: 'autoUpdate',
+        // registerSW.js com defer: não bloqueia a primeira pintura (T-75)
+        injectRegister: 'script-defer',
         includeAssets: ['icon.svg', 'apple-touch-icon.png'],
         manifest: {
           id: '/',

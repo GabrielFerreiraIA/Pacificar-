@@ -67,7 +67,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onSelectTab }) 
                 </span>
                 <span
                   className={`max-w-full truncate text-[10.5px] leading-none tracking-tight ${
-                    active ? 'font-bold text-leaf-800' : 'font-medium text-ink-3'
+                    active ? 'font-bold text-leaf-800' : 'font-medium text-ink-2'
                   }`}
                 >
                   {item.label}

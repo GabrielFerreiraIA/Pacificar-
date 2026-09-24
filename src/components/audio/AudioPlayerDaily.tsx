@@ -168,7 +168,7 @@ export const AudioPlayerDaily: React.FC<AudioPlayerDailyProps> = ({
             )}
             <button
               onClick={cycleRate}
-              aria-label={`Velocidade de reprodução ${rate}x. Toque para alterar.`}
+              aria-label={`${rate}× · velocidade de reprodução. Toque para alterar.`}
               className="tap press tnum rounded-full bg-leaf-700 px-3 py-1.5 text-[12px] font-bold text-leaf-50 hover:bg-leaf-600"
             >
               {rate}×
