@@ -106,7 +106,7 @@ Use os comandos em vez de editar à mão:  npm run tarefa -- iniciar|concluir|bl
   - O agente pode redigir um rascunho, mas a validação é da cliente ou de um advogado.
 - [ ] **T-62** Aviso de que o app não substitui atendimento médico · @agente · dep: T-61
   - No onboarding e no topo de Protocolos (zeólita, desparasitação).
-- [ ] **T-63** Exportar meus dados e pedir exclusão da conta · @agente · dep: T-14
+- [~] **T-63** Exportar meus dados e pedir exclusão da conta · @agente · dep: T-14 · em andamento: claude (2026-09-24)
   - Exporta JSON de todas as tabelas do usuário. A exclusão abre um pedido para a Ana (não apaga na hora).
 
 ## Fase 7 · Qualidade e PWA
