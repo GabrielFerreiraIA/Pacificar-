@@ -54,6 +54,7 @@ Levar o protótipo atual (100% `localStorage`, sem login) a um produto vendável
 | D8 | Questionário de doshas como módulo opcional fora da anamnese (`subScreen: 'doshas'`) | Aprovado na análise do áudio da cliente. Não pode contar no progresso da anamnese. |
 | D9 | SMTP próprio (Resend, grátis até 3 mil e-mails/mês) no Supabase Auth | O SMTP padrão do Supabase só envia para membros da equipe e tem limite mínimo. Sem isso, o convite de compra não chega. |
 | D10 | Migrations aplicadas pela API de gestão do Supabase; o arquivo local usa a versão (timestamp) que o servidor gravou | Mantém `supabase/migrations/` e o histórico remoto iguais, para a CLI não reaplicar nada |
+| D11 | Exames: 10 MB por arquivo, cota de 20 arquivos por paciente (policy no Storage) e fotos comprimidas no aparelho antes do envio (T-50) | O Storage gratuito tem 1 GB no total. Foto de celular cai de ~3 MB para ~300 KB. PDF escaneado de laboratório precisa da folga de 10 MB. |
 
 ## Riscos que o Gabriel precisa conhecer
 
