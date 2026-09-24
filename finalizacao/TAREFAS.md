@@ -116,7 +116,7 @@ Use os comandos em vez de editar à mão:  npm run tarefa -- iniciar|concluir|bl
   - `apple-touch-icon.png` está declarado no `vite.config.ts`, mas não existe em `public/`.
 - [x] **T-72** Code splitting das páginas (bundle hoje com 881 kB) · @agente · dep: — · concluída: claude (2026-09-24)
   - `React.lazy` por página. `recharts` num chunk separado. Meta: chunk inicial < 300 kB.
-- [~] **T-73** Check-in offline sincroniza quando a internet volta · @agente · dep: T-14 · em andamento: claude (2026-09-24)
+- [x] **T-73** Check-in offline sincroniza quando a internet volta · @agente · dep: T-14 · concluída: claude (2026-09-24)
 - [ ] **T-74** Teste em iPhone e Android reais · @gabriel · dep: T-22, T-52, T-71
   - Instalar o PWA, logar, fazer check-in, ouvir áudio, enviar exame, usar offline.
 - [ ] **T-75** Lighthouse ≥ 90 em Performance, Acessibilidade e Boas práticas · @agente · dep: T-72
