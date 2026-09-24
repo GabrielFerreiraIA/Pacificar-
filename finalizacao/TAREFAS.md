@@ -50,7 +50,7 @@ Use os comandos em vez de editar à mão:  npm run tarefa -- iniciar|concluir|bl
   - Aceite: um convite enviado pelo painel chega na caixa de entrada, não no spam.
 - [x] **T-21** Telas de login, esqueci a senha e definir senha · @agente · dep: T-10 · concluída: claude (2026-09-24)
   - E-mail + senha, recuperação, rota `/definir-senha` (convite e reset), logout no menu. Seguir o design system de `src/components/ui/Primitives.tsx`.
-- [~] **T-22** Guarda de sessão e remoção do "Modo de demonstração" · @agente · dep: T-21 · em andamento: claude (2026-09-24)
+- [x] **T-22** Guarda de sessão e remoção do "Modo de demonstração" · @agente · dep: T-21 · concluída: claude (2026-09-24)
   - Sem sessão, só a tela de login renderiza. `role` vem de `profiles.role`. O menu "Modo de demonstração" (`AppHeader.tsx`) só existe com `import.meta.env.DEV`.
   - Aceite: um paciente logado não consegue abrir o painel da terapeuta de nenhum jeito.
 - [ ] **T-23** Tela de acesso suspenso (reembolso/chargeback) · @agente · dep: T-22
