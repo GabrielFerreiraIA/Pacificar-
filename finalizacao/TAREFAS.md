@@ -100,7 +100,7 @@ Use os comandos em vez de editar à mão:  npm run tarefa -- iniciar|concluir|bl
 
 ## Fase 6 · LGPD e jurídico
 
-- [~] **T-60** Termo de consentimento com aceite registrado no primeiro acesso · @agente · dep: T-22 · em andamento: claude (2026-09-24)
+- [x] **T-60** Termo de consentimento com aceite registrado no primeiro acesso · @agente · dep: T-22 · concluída: claude (2026-09-24)
   - Tabela `consents` (user_id, versão do termo, aceito em). Sem aceite, o app não avança.
 - [ ] **T-61** Textos de política de privacidade e termos de uso · @ana @gabriel · dep: —
   - O agente pode redigir um rascunho, mas a validação é da cliente ou de um advogado.
