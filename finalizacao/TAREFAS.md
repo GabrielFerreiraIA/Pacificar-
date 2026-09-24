@@ -45,7 +45,7 @@ Use os comandos em vez de editar à mão:  npm run tarefa -- iniciar|concluir|bl
 
 ## Fase 2 · Autenticação
 
-- [~] **T-20** SMTP próprio (Resend) no Supabase e e-mails em português · @gabriel @agente · dep: T-10 · em andamento: claude (2026-09-24)
+- [!] **T-20** SMTP próprio (Resend) no Supabase e e-mails em português · @gabriel @agente · dep: T-10 · bloqueada: modelos prontos; o Supabase só aceita modelos com SMTP próprio: falta o Gabriel criar o Resend e cadastrar o SMTP (2026-09-24)
   - Gabriel cria a conta no Resend e verifica o domínio. O agente escreve os templates HTML de convite e de recuperação de senha em `supabase/templates/`.
   - Aceite: um convite enviado pelo painel chega na caixa de entrada, não no spam.
 - [x] **T-21** Telas de login, esqueci a senha e definir senha · @agente · dep: T-10 · concluída: claude (2026-09-24)
