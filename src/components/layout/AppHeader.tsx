@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
 import { PWAInstallPrompt } from './PWAInstallPrompt';
 import { Logo } from '../ui/Primitives';
-import { ShieldCheck, User, ChevronDown, Check, CircleUser, Compass } from 'lucide-react';
+import { ShieldCheck, User, ChevronDown, Check, CircleUser, Compass, LogOut } from 'lucide-react';
 
 interface AppHeaderProps {
   onNavigateToTab?: (tab: string) => void;
@@ -12,6 +13,7 @@ interface AppHeaderProps {
 
 export const AppHeader: React.FC<AppHeaderProps> = ({ onNavigateToTab, onReplayTour }) => {
   const { role, switchRole } = useApp();
+  const { session, signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -142,6 +144,24 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onNavigateToTab, onReplayT
                     </button>
                   );
                 })}
+
+                {session && (
+                  <>
+                    <hr className="my-1.5 border-line-soft" />
+                    <p className="truncate px-3 pb-1 pt-1.5 text-[11.5px] text-ink-3">{session.user.email}</p>
+                    <button
+                      role="menuitem"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        void signOut();
+                      }}
+                      className="flex w-full items-center gap-2.5 rounded-field px-3 py-2.5 text-[13px] font-semibold text-clay-600 hover:bg-clay-50"
+                    >
+                      <LogOut className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+                      Sair da conta
+                    </button>
+                  </>
+                )}
               </div>
             )}
           </div>

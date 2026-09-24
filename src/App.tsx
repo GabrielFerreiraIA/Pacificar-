@@ -5,6 +5,9 @@
 
 import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { AppProvider } from './context/AppContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { LoginPage, SetPasswordPage } from './pages/auth/AuthScreens';
+import { Logo } from './components/ui/Primitives';
 import { AppHeader } from './components/layout/AppHeader';
 import { BottomNav } from './components/layout/BottomNav';
 import { OfflineBanner } from './components/layout/OfflineBanner';
@@ -175,10 +178,39 @@ const AppContent: React.FC = () => {
   );
 };
 
-export default function App() {
+/** Tela de abertura enquanto a sessão salva no aparelho é lida (instantâneo na prática). */
+const Splash: React.FC = () => (
+  <div className="grain flex min-h-dvh items-center justify-center bg-canvas" role="status">
+    <Logo className="h-14 w-14 animate-pulse" />
+    <span className="sr-only">Carregando…</span>
+  </div>
+);
+
+/**
+ * Portão de acesso (T-21): sem sessão, só a tela de login.
+ * Em desenvolvimento dá para abrir a demo com dados fictícios sem login.
+ */
+const AuthGate: React.FC = () => {
+  const { session, loading, mustSetPassword } = useAuth();
+  const [demo, setDemo] = useState(false);
+
+  if (mustSetPassword) return <SetPasswordPage />;
+  if (loading) return <Splash />;
+  if (!session && !demo) {
+    return <LoginPage onDemo={import.meta.env.DEV ? () => setDemo(true) : undefined} />;
+  }
+
   return (
     <AppProvider>
       <AppContent />
     </AppProvider>
+  );
+};
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AuthGate />
+    </AuthProvider>
   );
 }
