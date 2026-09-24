@@ -33,7 +33,7 @@ Use os comandos em vez de editar à mão:  npm run tarefa -- iniciar|concluir|bl
 - [x] **T-12** Políticas RLS (paciente vê só o próprio, terapeuta vê tudo) · @agente · dep: T-11 · concluída: claude (2026-09-24)
   - Função `is_admin()` com `security definer`. Toda tabela com RLS ligada. `purchases` e `heartbeat` sem policy (só service role).
   - Aceite: script SQL de teste prova que o paciente A não lê dados do paciente B.
-- [ ] **T-13** Bucket privado `exames` no Storage com policies por pasta do usuário · @agente · dep: T-12
+- [~] **T-13** Bucket privado `exames` no Storage com policies por pasta do usuário · @agente · dep: T-12 · em andamento: claude (2026-09-24)
   - Caminho `{user_id}/{arquivo}`. Leitura por signed URL. Limite de 10 MB, só PDF/JPG/PNG/HEIC.
 - [ ] **T-14** Migrar o AppContext de localStorage para Supabase · @agente · dep: T-12, T-21
   - Camada `src/lib/api/*.ts` por entidade. `localStorage` vira só cache offline. Auto-save da anamnese com debounce.
