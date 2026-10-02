@@ -17,6 +17,7 @@ import { OfflineBanner } from './components/layout/OfflineBanner';
 import { HomeDailyPage } from './pages/patient/HomeDailyPage';
 import { TourOverlay } from './components/onboarding/TourOverlay';
 import { ErrorBoundary } from './components/feedback/ErrorBoundary';
+import { DEMO_ATIVA } from './data/demo';
 
 /* Code splitting (T-72): só a Home vai no pacote inicial; o resto carrega sob demanda.
    Os pedaços continuam no precache do service worker, então o app segue offline. */
@@ -205,7 +206,7 @@ const AuthGate: React.FC = () => {
   if (mustSetPassword) return <SetPasswordPage />;
   if (loading) return <Splash />;
   if (!session && !demo) {
-    return <LoginPage onDemo={import.meta.env.DEV ? () => setDemo(true) : undefined} />;
+    return <LoginPage onDemo={DEMO_ATIVA ? () => setDemo(true) : undefined} />;
   }
   // Reembolso/chargeback (T-23). O RLS já bloqueia a escrita; aqui é a tela acolhedora.
   if (session && profile?.access_status === 'revoked') return <SuspendedPage />;

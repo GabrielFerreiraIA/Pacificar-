@@ -2,6 +2,7 @@ import React, { useId, useState } from 'react';
 import { ArrowLeft, Eye, EyeOff, KeyRound, LogIn, MailCheck, Send } from 'lucide-react';
 import { Button, Field, Logo, inputClass } from '../../components/ui/Primitives';
 import { useAuth } from '../../context/AuthContext';
+import { DEMO_ATIVA } from '../../data/demo';
 
 /* ═══════════════════════════════════════════════════════════════
    Telas de acesso (T-21): entrar, esqueci a senha e definir senha.
@@ -198,9 +199,9 @@ export const LoginPage: React.FC<{ onDemo?: () => void }> = ({ onDemo }) => {
             Servidor não configurado: faltam as variáveis VITE_SUPABASE_* no .env.local.
           </p>
         )}
-        {import.meta.env.DEV && onDemo && (
+        {DEMO_ATIVA && onDemo && (
           <Button variant="ghost" onClick={onDemo}>
-            Abrir modo demonstração (só em desenvolvimento)
+            Abrir modo demonstração
           </Button>
         )}
       </div>

@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { PWAInstallPrompt } from './PWAInstallPrompt';
 import { Logo } from '../ui/Primitives';
 import { ShieldCheck, User, ChevronDown, Check, CircleUser, Compass, LogOut } from 'lucide-react';
+import { DEMO_ATIVA } from '../../data/demo';
 
 interface AppHeaderProps {
   onNavigateToTab?: (tab: string) => void;
@@ -114,7 +115,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onNavigateToTab, onReplayT
                 )}
 
                 {/* Troca de papel só na demonstração local: sem login e fora do build de produção (T-22) */}
-                {import.meta.env.DEV && !session && (
+                {DEMO_ATIVA && !session && (
                   <>
                     <p className="eyebrow px-3 pb-1.5 pt-2">Modo de demonstração</p>
                     {(
