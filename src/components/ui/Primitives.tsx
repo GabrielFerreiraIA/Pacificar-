@@ -7,21 +7,7 @@ import React from 'react';
 
 /** Marca — folha ayurvédica com sol nascente. */
 export const Logo: React.FC<{ className?: string }> = ({ className = 'w-9 h-9' }) => (
-  <svg viewBox="0 0 512 512" className={className} role="img" aria-label="PACIFICAR">
-    <rect width="512" height="512" rx="112" fill="var(--color-leaf-600)" />
-    <circle cx="256" cy="146" r="34" fill="var(--color-ochre-300)" />
-    <path
-      d="M256 196c58 52 84 108 66 152-14 34-58 40-66 6-8 34-52 28-66-6-18-44 8-100 66-152z"
-      fill="var(--color-canvas)"
-    />
-    <path d="M256 232v128" stroke="var(--color-leaf-600)" strokeWidth="13" strokeLinecap="round" />
-    <path
-      d="M256 288l-34-26M256 322l34-26"
-      stroke="var(--color-leaf-600)"
-      strokeWidth="11"
-      strokeLinecap="round"
-    />
-  </svg>
+  <img src="/logo.png" alt="PACIFICAR" className={className} width={256} height={256} decoding="async" />
 );
 
 /** Cabeçalho de seção: um respiro consistente antes de cada bloco. */
