@@ -130,3 +130,5 @@ Use os comandos em vez de editar à mão:  npm run tarefa -- iniciar|concluir|bl
   - Script `supabase db dump`. O arquivo fica **fora** do GitHub (dado de saúde).
 - [x] **T-83** Manual da Ana (ver pacientes, prescrever, suspender acesso) · @agente · dep: T-57 · concluída: claude (2026-09-24)
 - [ ] **T-84** Primeira venda real acompanhada e 7 dias de monitoramento · @gabriel @ana · dep: T-33, T-43, T-60, T-74
+- [~] **T-85** Modo demo para a Ana na Vercel (VITE_DEMO) e subida no GitHub · @agente · dep: — · em andamento: claude (2026-10-01)
+  - `VITE_DEMO=true` liga a demonstração (dados fictícios, salva no navegador) no build de produção. Sem a variável, o `mockData` sai do bundle. Ao tirar o botão: apagar `VITE_DEMO` na Vercel e redeploy.
