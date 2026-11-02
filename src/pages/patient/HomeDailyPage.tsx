@@ -3,6 +3,8 @@ import { useApp } from '../../context/AppContext';
 import { JOURNEY_DAYS } from '../../data/journeyDays';
 import { AudioPlayerDaily } from '../../components/audio/AudioPlayerDaily';
 import { MealCard } from '../../components/cards/MealCard';
+import { AUDIO_ENABLED } from '../../config/features';
+import { MEAL_OPTIONS } from '../../data/mealOptions';
 import { SelfCareCard } from '../../components/cards/SelfCareCard';
 import { RestrictionBanner } from '../../components/cards/RestrictionBanner';
 import { Button, Card, Pill, Progress, SectionTitle } from '../../components/ui/Primitives';
@@ -167,15 +169,17 @@ export const HomeDailyPage: React.FC<HomeDailyPageProps> = ({
       </Card>
 
       {/* ── Áudio da terapeuta ────────────────────────────────── */}
-      <div className="rise" style={{ animationDelay: '160ms' }} data-tour="audio">
-        <AudioPlayerDaily
-          dayNumber={day.day_number}
-          audioTitle={day.audio_title}
-          audioDuration={day.audio_duration}
-          audioSummary={day.audio_summary}
-          audioTranscript={day.audio_transcript}
-        />
-      </div>
+      {AUDIO_ENABLED && (
+        <div className="rise" style={{ animationDelay: '160ms' }} data-tour="audio">
+          <AudioPlayerDaily
+            dayNumber={day.day_number}
+            audioTitle={day.audio_title}
+            audioDuration={day.audio_duration}
+            audioSummary={day.audio_summary}
+            audioTranscript={day.audio_transcript}
+          />
+        </div>
+      )}
 
       {/* ── Quádrupla restrição ───────────────────────────────── */}
       <RestrictionBanner />
@@ -198,9 +202,9 @@ export const HomeDailyPage: React.FC<HomeDailyPageProps> = ({
         />
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <MealCard type="breakfast" {...day.meals.breakfast} />
-          <MealCard type="lunch" {...day.meals.lunch} />
-          <MealCard type="dinner" {...day.meals.dinner} />
+          <MealCard type="breakfast" {...day.meals.breakfast} options={MEAL_OPTIONS.breakfast} />
+          <MealCard type="lunch" {...day.meals.lunch} options={MEAL_OPTIONS.lunch} />
+          <MealCard type="dinner" {...day.meals.dinner} options={MEAL_OPTIONS.dinner} />
           {day.meals.tea_or_snack && (
             <MealCard type="tea_or_snack" {...day.meals.tea_or_snack} />
           )}

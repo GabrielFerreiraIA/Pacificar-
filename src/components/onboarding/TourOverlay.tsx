@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Logo } from '../ui/Primitives';
+import { AUDIO_ENABLED } from '../../config/features';
 import { ArrowLeft, ArrowRight, Check, X } from 'lucide-react';
 
 /* ═══════════════════════════════════════════════════════════════
@@ -17,7 +18,7 @@ export interface TourStep {
   body: string;
 }
 
-export const TOUR_STEPS: TourStep[] = [
+const ALL_STEPS: TourStep[] = [
   {
     title: 'Boas-vindas ao Pacificar',
     body: 'Em trinta segundos eu te mostro onde fica cada coisa. Você pode sair a qualquer momento e rever depois pelo menu.'
@@ -67,6 +68,9 @@ export const TOUR_STEPS: TourStep[] = [
     body: 'Seu próximo passo é a aba Preparo. Para rever esta apresentação a qualquer momento, aperte a tecla ? — ou use o menu no topo.'
   }
 ];
+
+/** Sem o áudio no ar, o passo "A voz da Ana" também sai do tour. */
+export const TOUR_STEPS: TourStep[] = ALL_STEPS.filter((s) => AUDIO_ENABLED || s.target !== 'audio');
 
 const PAD = 8;
 const GAP = 14;
