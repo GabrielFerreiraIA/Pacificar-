@@ -107,6 +107,8 @@ export const JourneyTimeline: React.FC<Props> = ({
     if (!d.moved && Math.abs(dx) > 6) {
       d.moved = true;
       setDragging(true);
+      // só depois do limiar: um clique simples continua chegando no cartão
+      scrollerRef.current.setPointerCapture(e.pointerId);
     }
     if (d.moved) scrollerRef.current.scrollLeft = d.startLeft - dx;
   };
@@ -117,6 +119,12 @@ export const JourneyTimeline: React.FC<Props> = ({
     // o clique logo depois de arrastar não deve trocar de dia
     window.setTimeout(() => (drag.current.moved = false), 0);
   };
+
+  // Esmaece o próprio conteúdo nas bordas com mais dias (sem caixa de cor sobre o fundo)
+  const fade = '2.75rem';
+  const mask = `linear-gradient(to right, ${canLeft ? 'transparent' : '#000'} 0, #000 ${fade}, #000 calc(100% - ${fade}), ${
+    canRight ? 'transparent' : '#000'
+  } 100%)`;
 
   const weeks = Array.from({ length: Math.ceil(totalDays / WEEK_SIZE) }, (_, w) =>
     Array.from({ length: WEEK_SIZE }, (_, i) => w * WEEK_SIZE + i + 1).filter(d => d <= totalDays)
@@ -133,17 +141,17 @@ export const JourneyTimeline: React.FC<Props> = ({
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
-        onPointerLeave={endDrag}
+        onPointerCancel={endDrag}
         onClickCapture={e => {
           if (drag.current.moved) {
             e.preventDefault();
             e.stopPropagation();
           }
         }}
-        className={`no-scrollbar flex overflow-x-auto overscroll-x-contain px-5 pb-2 pt-1 ${
-          dragging ? 'cursor-grabbing select-none' : 'snap-x snap-proximity scroll-smooth sm:cursor-grab'
+        className={`no-scrollbar flex select-none overflow-x-auto overscroll-x-contain px-5 pb-2 pt-1 ${
+          dragging ? 'cursor-grabbing' : 'snap-x snap-proximity scroll-smooth sm:cursor-grab'
         }`}
-        style={{ scrollPaddingInline: '1.25rem' }}
+        style={{ scrollPaddingInline: '1.25rem', maskImage: mask, WebkitMaskImage: mask }}
       >
         {weeks.map((days, w) => (
           <div
@@ -151,7 +159,7 @@ export const JourneyTimeline: React.FC<Props> = ({
             role="presentation"
             className={`shrink-0 ${w > 0 ? 'ml-4 border-l border-line pl-4' : ''}`}
           >
-            <p className="eyebrow mb-2 text-[10.5px]">Semana {w + 1}</p>
+            <p className="eyebrow sticky left-11 mb-2 w-max text-[10.5px]">Semana {w + 1}</p>
             <div className="flex gap-1.5">
               {days.map(n => {
                 const active = selectedDay === n;
@@ -230,20 +238,6 @@ export const JourneyTimeline: React.FC<Props> = ({
         {/* respiro final para o último dia poder centralizar */}
         <span className="w-2 shrink-0" aria-hidden="true" />
       </div>
-
-      {/* Sombras que avisam que há mais dias para os lados */}
-      <span
-        aria-hidden="true"
-        className={`pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-canvas to-transparent transition-opacity duration-200 ${
-          canLeft ? 'opacity-100' : 'opacity-0'
-        }`}
-      />
-      <span
-        aria-hidden="true"
-        className={`pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-canvas to-transparent transition-opacity duration-200 ${
-          canRight ? 'opacity-100' : 'opacity-0'
-        }`}
-      />
 
       {/* Setas para quem usa mouse (no celular basta deslizar) */}
       {canLeft && (
