@@ -14,7 +14,8 @@
     "log": "node finalizacao/scripts/log.mjs",
     "log:ultimos": "node finalizacao/scripts/log.mjs ultimos",
     "checklist": "node finalizacao/checklist/gerar.mjs",
-    "imagens:pratos": "node finalizacao/scripts/otimizar-pratos.mjs"
+    "imagens:pratos": "node finalizacao/scripts/otimizar-pratos.mjs",
+    "imagens:folhas": "node finalizacao/scripts/recortar-folhas.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.4",
