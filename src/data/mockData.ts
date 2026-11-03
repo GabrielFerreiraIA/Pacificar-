@@ -1,6 +1,9 @@
 import { buildParasiteCycles, dataSaoPaulo } from '../lib/lunar';
 import { UserProfile, AnamneseData, LabExamFile, DailyCheckin, Prescription, ParasiteCycle } from '../types';
 
+/** Dia da jornada em que a paciente fictícia está na demonstração (dias 1 a este ficam abertos). */
+export const DEMO_DIA_ATUAL = 20;
+
 export const DEFAULT_USER_PROFILE: UserProfile = {
   id: 'usr_pacificar_01',
   full_name: 'Camila Albuquerque Silva',
@@ -11,7 +14,7 @@ export const DEFAULT_USER_PROFILE: UserProfile = {
   age: 36,
   phone: '(84) 99812-4433',
   journey_start_date: '2026-08-27',
-  current_day: 6,
+  current_day: DEMO_DIA_ATUAL,
   avatar_url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
   created_at: '2026-08-27T08:00:00Z'
 };
@@ -96,7 +99,7 @@ export const DEFAULT_LAB_EXAMS: LabExamFile[] = [
   }
 ];
 
-export const DEFAULT_CHECKINS: DailyCheckin[] = [
+const CHECKINS_INICIAIS: DailyCheckin[] = [
   {
     id: 'chk_d1',
     user_id: 'usr_pacificar_01',
@@ -189,6 +192,41 @@ export const DEFAULT_CHECKINS: DailyCheckin[] = [
   }
 ];
 
+const NOTAS_DEMO = [
+  'Acordei mais leve. A barriga está bem menos estufada depois do almoço.',
+  'Dormi a noite inteira sem acordar. Os chás da noite estão ajudando muito.',
+  'Bateu vontade de doce à tarde, mas passou com o chá de canela.',
+  'Mais disposição para caminhar. O intestino está funcionando todo dia.',
+  'Jantei a sopa e fui dormir cedo. Acordei bem, sem peso no corpo.',
+  'Comida de verdade já virou rotina. Quase não penso em pão ou açúcar.'
+];
+
+/** Check-ins fictícios dos dias 6 a 19: a melhora sobe devagar, como numa jornada real. */
+const CHECKINS_GERADOS: DailyCheckin[] = Array.from({ length: 14 }, (_, k) => {
+  const d = k + 6;
+  const dia = new Date(Date.UTC(2026, 7, 27 + d - 1, 21, 0, 0));
+  return {
+    id: `chk_d${d}`,
+    user_id: 'usr_pacificar_01',
+    day_number: d,
+    energy_rating: Math.min(5, 3 + Math.floor(d / 8)),
+    sleep_quality: Math.min(5, 4 + (d > 9 ? 1 : 0)),
+    bloating_level: (d < 10 ? 2 : 1) as 1 | 2,
+    sweet_craving: (d < 12 ? 2 : 1) as 1 | 2,
+    bristol_type: 4,
+    diet_compliance: d % 7 === 0 ? 'partial' : 'total',
+    water_intake: `${(2.5 + (d % 3) * 0.25).toFixed(1)} Litros`,
+    self_care_done: true,
+    tongue_scraping_done: true,
+    warm_water_done: true,
+    zeolite_taken: true,
+    journal_notes: NOTAS_DEMO[k % NOTAS_DEMO.length],
+    created_at: dia.toISOString()
+  };
+});
+
+export const DEFAULT_CHECKINS: DailyCheckin[] = [...CHECKINS_INICIAIS, ...CHECKINS_GERADOS];
+
 export const DEFAULT_PRESCRIPTION: Prescription = {
   id: 'presc_01',
   user_id: 'usr_pacificar_01',
@@ -249,7 +287,7 @@ export const OTHER_PATIENTS_LIST: UserProfile[] = [
     weight: 64,
     age: 36,
     journey_start_date: '2026-08-27',
-    current_day: 6,
+    current_day: DEMO_DIA_ATUAL,
     avatar_url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
     created_at: '2026-08-27T08:00:00Z'
   },

@@ -145,12 +145,21 @@ function gravarJSON(key: string, value: unknown) {
 function snapshotDemo(): Snapshot {
   if (!DEMO) return EMPTY_SNAPSHOT; // produção: não existe demonstração
   return {
-    currentUser: lerJSON(STORAGE_KEYS.USER, DEMO.DEFAULT_USER_PROFILE),
+    // Quem já abriu a demo antes guarda o Dia 6 no navegador: aqui o dia nunca fica abaixo do da demonstração
+    currentUser: (() => {
+      const u = lerJSON(STORAGE_KEYS.USER, DEMO.DEFAULT_USER_PROFILE);
+      return u && u.role === 'patient' ? { ...u, current_day: Math.max(u.current_day, DEMO.DEMO_DIA_ATUAL) } : u;
+    })(),
     labExams: lerJSON(STORAGE_KEYS.EXAMS, DEMO.DEFAULT_LAB_EXAMS),
-    checkins: lerJSON(STORAGE_KEYS.CHECKINS, DEMO.DEFAULT_CHECKINS),
+    // Os dias da demonstração que a pessoa ainda não registrou entram junto com os que ela já salvou
+    checkins: (() => {
+      const salvos = lerJSON<DailyCheckin[]>(STORAGE_KEYS.CHECKINS, []);
+      const dias = new Set(salvos.map(c => c.day_number));
+      return [...DEMO.DEFAULT_CHECKINS.filter(c => !dias.has(c.day_number)), ...salvos].sort((a, b) => a.day_number - b.day_number);
+    })(),
     prescription: lerJSON(STORAGE_KEYS.PRESCRIPTION, DEMO.DEFAULT_PRESCRIPTION),
     parasiteCycles: lerJSON(STORAGE_KEYS.PARASITE, DEMO.demoParasiteCycles()),
-    zeoliteLoggedDays: lerJSON(STORAGE_KEYS.ZEOLITE, [1, 2, 3, 4, 5, 6]),
+    zeoliteLoggedDays: lerJSON(STORAGE_KEYS.ZEOLITE, Array.from({ length: DEMO.DEMO_DIA_ATUAL - 1 }, (_, i) => i + 1)),
     anamnese: { ...EMPTY_ANAMNESE, ...lerJSON<Partial<AnamneseRecord>>(STORAGE_KEYS.ANAMNESE, {}) },
     preparoChecked: lerJSON(STORAGE_KEYS.PREPARO, [])
   };
@@ -187,7 +196,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, authRole, au
   const anamneseTimer = useRef<number | undefined>(undefined);
 
   const [selectedDay, setSelectedDayState] = useState<number>(() =>
-    lerJSON(STORAGE_KEYS.DAY, isDemo ? 6 : (inicial.currentUser?.current_day ?? 1))
+    lerJSON(STORAGE_KEYS.DAY, isDemo ? (DEMO?.DEMO_DIA_ATUAL ?? 1) : (inicial.currentUser?.current_day ?? 1))
   );
 
   const [patientsList] = useState<UserProfile[]>(() => DEMO?.OTHER_PATIENTS_LIST ?? []);
