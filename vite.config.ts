@@ -93,6 +93,19 @@ export default defineConfig(() => {
             { src: '/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
           ],
         },
+        workbox: {
+          // Fotos dos pratos: baixam sob demanda e ficam no aparelho (abrem rápido e funcionam offline)
+          runtimeCaching: [
+            {
+              urlPattern: ({url}: {url: URL}) => url.pathname.startsWith('/pratos/'),
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'pratos',
+                expiration: {maxEntries: 140, maxAgeSeconds: 60 * 60 * 24 * 90},
+              },
+            },
+          ],
+        },
         devOptions: {
           enabled: true,
         },

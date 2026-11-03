@@ -17,3 +17,6 @@ finalizacao/logs/.sessoes.jsonl
 
 # Página gerada do checklist (fonte: finalizacao/checklist/template.html + TAREFAS.md)
 finalizacao/checklist/checklist.html
+
+# Fotos originais dos pratos (PNG pesado). O app usa as versões WebP de public/pratos/
+imagens-origem/
