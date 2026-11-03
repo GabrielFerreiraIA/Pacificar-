@@ -237,6 +237,35 @@
     }
   }
 
+  /* ── Linha do tempo: "tremidinha" que convida a deslizar ── */
+  .nudge-left {
+    animation: nudge-left 1100ms var(--ease-calm);
+  }
+  .nudge-right {
+    animation: nudge-right 1100ms var(--ease-calm);
+  }
+  @keyframes nudge-left {
+    0%, 100% { transform: translate3d(0, 0, 0); }
+    28%      { transform: translate3d(-22px, 0, 0); }
+    52%      { transform: translate3d(0, 0, 0); }
+    72%      { transform: translate3d(-8px, 0, 0); }
+  }
+  @keyframes nudge-right {
+    0%, 100% { transform: translate3d(0, 0, 0); }
+    28%      { transform: translate3d(22px, 0, 0); }
+    52%      { transform: translate3d(0, 0, 0); }
+    72%      { transform: translate3d(8px, 0, 0); }
+  }
+
+  /* Anel do dia de hoje (pulso suave) */
+  .today-pulse {
+    animation: today-pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes today-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgb(208 149 74 / 0.45); }
+    50%      { box-shadow: 0 0 0 5px rgb(208 149 74 / 0); }
+  }
+
   .breathe {
     animation: breathe 5s ease-in-out infinite;
   }

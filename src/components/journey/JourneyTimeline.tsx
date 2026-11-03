@@ -38,6 +38,18 @@ export const JourneyTimeline: React.FC<Props> = ({
   const [dragging, setDragging] = useState(false);
   const drag = useRef({ down: false, moved: false, startX: 0, startLeft: 0 });
   const firstCenter = useRef(true);
+  // barra de rolagem própria: largura e posição do "polegar" em %
+  const [thumb, setThumb] = useState({ w: 100, x: 0 });
+  const trackRef = useRef<HTMLDivElement>(null);
+  const thumbDrag = useRef<{ startX: number; startLeft: number } | null>(null);
+  // tremidinha: some depois que a pessoa mexe na faixa
+  const [nudge, setNudge] = useState<'left' | 'right' | null>(null);
+  const interacted = useRef(false);
+  const edges = useRef({ left: false, right: false });
+  const markInteracted = () => {
+    interacted.current = true;
+    setNudge(null);
+  };
 
   const reduceMotion = () =>
     typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -45,8 +57,13 @@ export const JourneyTimeline: React.FC<Props> = ({
   const updateEdges = useCallback(() => {
     const el = scrollerRef.current;
     if (!el) return;
-    setCanLeft(el.scrollLeft > 4);
-    setCanRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+    const left = el.scrollLeft > 4;
+    const right = el.scrollLeft + el.clientWidth < el.scrollWidth - 4;
+    edges.current = { left, right };
+    setCanLeft(left);
+    setCanRight(right);
+    const ratio = el.clientWidth / el.scrollWidth;
+    setThumb({ w: Math.min(100, ratio * 100), x: (el.scrollLeft / el.scrollWidth) * 100 });
   }, []);
 
   // Centraliza o dia selecionado (sem animação na primeira vez e com movimento reduzido)
@@ -70,6 +87,59 @@ export const JourneyTimeline: React.FC<Props> = ({
     ro.observe(el);
     return () => ro.disconnect();
   }, [updateEdges]);
+
+  // De vez em quando os dias "tremem" para o lado onde há mais conteúdo (até 4 vezes, nunca com movimento reduzido)
+  useEffect(() => {
+    if (reduceMotion()) return;
+    let vezes = 0;
+    let fim: number | undefined;
+    const tremer = () => {
+      if (interacted.current || document.hidden) return;
+      const { left, right } = edges.current;
+      if (!left && !right) return;
+      vezes++;
+      setNudge(right ? 'left' : 'right');
+      fim = window.setTimeout(() => setNudge(null), 1150);
+    };
+    const primeiro = window.setTimeout(tremer, 1600);
+    const ciclo = window.setInterval(() => {
+      if (vezes >= 4 || interacted.current) return window.clearInterval(ciclo);
+      tremer();
+    }, 7000);
+    return () => {
+      window.clearTimeout(primeiro);
+      window.clearTimeout(fim);
+      window.clearInterval(ciclo);
+    };
+  }, []);
+
+  // Arrastar o polegar da barra de rolagem (mouse e toque) ou tocar no trilho para pular
+  const onTrackPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    const el = scrollerRef.current;
+    const track = trackRef.current;
+    if (!el || !track) return;
+    markInteracted();
+    const r = track.getBoundingClientRect();
+    const onThumb = (e.target as HTMLElement).dataset.thumb === '1';
+    if (!onThumb) {
+      // centraliza o polegar onde tocou
+      const frac = (e.clientX - r.left) / r.width;
+      el.scrollTo({ left: frac * el.scrollWidth - el.clientWidth / 2, behavior: reduceMotion() ? 'auto' : 'smooth' });
+    }
+    thumbDrag.current = { startX: e.clientX, startLeft: onThumb ? el.scrollLeft : frac0(e, r, el) };
+    track.setPointerCapture(e.pointerId);
+  };
+  const frac0 = (e: React.PointerEvent, r: DOMRect, el: HTMLDivElement) =>
+    ((e.clientX - r.left) / r.width) * el.scrollWidth - el.clientWidth / 2;
+  const onTrackPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const el = scrollerRef.current;
+    const track = trackRef.current;
+    const d = thumbDrag.current;
+    if (!el || !track || !d) return;
+    const escala = el.scrollWidth / track.getBoundingClientRect().width;
+    el.scrollTo({ left: d.startLeft + (e.clientX - d.startX) * escala, behavior: 'auto' });
+  };
+  const onTrackPointerUp = () => (thumbDrag.current = null);
 
   const scrollByPage = (dir: 1 | -1) => {
     const el = scrollerRef.current;
@@ -137,8 +207,16 @@ export const JourneyTimeline: React.FC<Props> = ({
         role="tablist"
         aria-label="Selecionar dia da jornada"
         onScroll={updateEdges}
-        onKeyDown={onKeyDown}
-        onPointerDown={onPointerDown}
+        onKeyDown={e => {
+          markInteracted();
+          onKeyDown(e);
+        }}
+        onWheel={markInteracted}
+        onTouchStart={markInteracted}
+        onPointerDown={e => {
+          markInteracted();
+          onPointerDown(e);
+        }}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
@@ -153,6 +231,7 @@ export const JourneyTimeline: React.FC<Props> = ({
         }`}
         style={{ scrollPaddingInline: '1.25rem', maskImage: mask, WebkitMaskImage: mask }}
       >
+        <div role="presentation" className={`flex ${nudge === 'left' ? 'nudge-left' : nudge === 'right' ? 'nudge-right' : ''}`}>
         {weeks.map((days, w) => (
           <div
             key={w}
@@ -235,9 +314,31 @@ export const JourneyTimeline: React.FC<Props> = ({
             </div>
           </div>
         ))}
+        </div>
         {/* respiro final para o último dia poder centralizar */}
         <span className="w-2 shrink-0" aria-hidden="true" />
       </div>
+
+      {/* Barra de rolagem visível: mostra onde você está nos 21 dias e dá para arrastar */}
+      {thumb.w < 99.5 && (
+        <div
+          ref={trackRef}
+          aria-hidden="true"
+          onPointerDown={onTrackPointerDown}
+          onPointerMove={onTrackPointerMove}
+          onPointerUp={onTrackPointerUp}
+          onPointerCancel={onTrackPointerUp}
+          className="mx-5 mt-1 cursor-pointer touch-none py-2"
+        >
+          <div className="relative h-1.5 rounded-full bg-line-soft">
+            <div
+              data-thumb="1"
+              className="absolute inset-y-0 rounded-full bg-leaf-400 transition-colors hover:bg-leaf-500 active:bg-leaf-600"
+              style={{ width: `${thumb.w}%`, left: `${thumb.x}%` }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Setas para quem usa mouse (no celular basta deslizar) */}
       {canLeft && (
@@ -245,7 +346,7 @@ export const JourneyTimeline: React.FC<Props> = ({
           type="button"
           onClick={() => scrollByPage(-1)}
           aria-label="Ver dias anteriores"
-          className="press absolute left-2 top-1/2 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-line bg-surface text-ink-2 shadow-leaf-sm hover:text-leaf-700 sm:flex"
+          className="press absolute left-2 top-[46px] hidden h-9 w-9 items-center justify-center rounded-full border border-line bg-surface text-ink-2 shadow-leaf-sm hover:text-leaf-700 sm:flex"
         >
           <ChevronLeft className="h-4 w-4" strokeWidth={2.2} aria-hidden="true" />
         </button>
@@ -255,7 +356,7 @@ export const JourneyTimeline: React.FC<Props> = ({
           type="button"
           onClick={() => scrollByPage(1)}
           aria-label="Ver próximos dias"
-          className="press absolute right-2 top-1/2 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-line bg-surface text-ink-2 shadow-leaf-sm hover:text-leaf-700 sm:flex"
+          className="press absolute right-2 top-[46px] hidden h-9 w-9 items-center justify-center rounded-full border border-line bg-surface text-ink-2 shadow-leaf-sm hover:text-leaf-700 sm:flex"
         >
           <ChevronRight className="h-4 w-4" strokeWidth={2.2} aria-hidden="true" />
         </button>

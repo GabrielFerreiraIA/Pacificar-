@@ -4,11 +4,12 @@ import { JOURNEY_DAYS } from '../../data/journeyDays';
 import { AudioPlayerDaily } from '../../components/audio/AudioPlayerDaily';
 import { MealCard } from '../../components/cards/MealCard';
 import { JourneyTimeline } from '../../components/journey/JourneyTimeline';
+import { JourneyProgress } from '../../components/journey/JourneyProgress';
 import { AUDIO_ENABLED } from '../../config/features';
 import { MEAL_OPTIONS } from '../../data/mealOptions';
 import { SelfCareCard } from '../../components/cards/SelfCareCard';
 import { RestrictionBanner } from '../../components/cards/RestrictionBanner';
-import { Button, Card, Pill, Progress, SectionTitle } from '../../components/ui/Primitives';
+import { Button, Card, Pill, SectionTitle } from '../../components/ui/Primitives';
 import {
   Check,
   ArrowRight,
@@ -43,7 +44,6 @@ export const HomeDailyPage: React.FC<HomeDailyPageProps> = ({
   const day = JOURNEY_DAYS.find(d => d.day_number === selectedDay) ?? JOURNEY_DAYS[0];
   const locked = isLocked(selectedDay);
   const checkinDone = checkins.some(c => c.day_number === selectedDay);
-  const progress = (checkins.length / 21) * 100;
   const isMilestone = [7, 14, 21].includes(selectedDay);
 
   const [checked, setChecked] = useState<Record<string, boolean>>({});
@@ -85,19 +85,19 @@ export const HomeDailyPage: React.FC<HomeDailyPageProps> = ({
 
       {/* ── Linha do tempo dos 21 dias ────────────────────────── */}
       <section
-        className="rise space-y-3"
+        className="rise card overflow-hidden p-5 pb-3"
         style={{ animationDelay: '60ms' }}
         aria-label="Linha do tempo da jornada"
         data-tour="timeline"
       >
-        <div className="flex items-center justify-between px-1">
-          <p className="eyebrow">Sua jornada</p>
-          <p className="tnum text-[12px] font-semibold text-ink-3">
-            {checkins.length} de 21 registrados
-          </p>
-        </div>
+        <JourneyProgress
+          totalDays={JOURNEY_DAYS.length}
+          today={unlockedUntil}
+          selectedDay={selectedDay}
+          loggedDays={new Set(checkins.map(c => c.day_number))}
+        />
 
-        <Progress value={progress} label="Progresso dos 21 dias" />
+        <div className="-mx-5 my-5 border-t border-line-soft" />
 
         <JourneyTimeline
           totalDays={JOURNEY_DAYS.length}
