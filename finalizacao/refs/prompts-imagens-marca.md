@@ -32,8 +32,8 @@ Gerado por script. O **bloco de marca** já está embutido em cada prompt (cada 
 
 1. Cole o mega prompt da folha na ferramenta e gere em **formato quadrado (1:1)**. Quanto maior a resolução, melhor (ideal 2048 px; se vier 1024 px também serve).
 2. Confira **antes de recortar**: os 4 ícones estão na ordem pedida, cada um no centro da sua célula, sem linhas, sem texto, mesmo traço e mesma escala. Se algum saiu errado, **peça só a correção** ("redesenhe o ícone do canto superior direito como …, mantendo os demais idênticos") ou gere a folha de novo.
-3. Salve a folha como **`imagens-origem/anamnese/_folhas/clima.png`** (e `pele.png`, `exercicio.png`; a de doshas em `imagens-origem/doshas/_folhas/doshas.png`).
-4. **Recorte automático:** `npm run imagens:folhas`. O script divide cada folha exatamente nos quadrantes e salva cada ícone com o nome certo (ex.: `clima-frio.png`). Se preferir recortar à mão, corte nas linhas do meio (50% da largura e da altura); a ordem é: canto superior esquerdo, superior direito, inferior esquerdo, inferior direito.
+3. **Jogue os arquivos numa pasta qualquer** (qualquer nome serve, desde que contenha o nome do item: `climas.png`, `Raspador de lingua.png`, `sabor-doce · Doce.png`…) e rode `npm run imagens:importar -- "caminho/da/pasta"`. O script reconhece o nome, **renomeia e organiza** cada arquivo em `imagens-origem/<grupo>/` e põe as folhas em `_folhas/`.
+4. Rode `npm run imagens`. Ele **corta as folhas** exatamente nos quadrantes (`clima-frio.png`…), **converte tudo para WebP leve** e grava em `public/` (preparo, anamnese, doshas e pratos). Depois é só commitar `public/`.
 5. Se a IA não respeitar a grade de jeito nenhum, use o **Plano B** (prompts individuais) da mesma seção.
 
 **Dica:** gere as 4 folhas **na mesma conversa**, começando pela de clima. Depois de aprovada, peça "mesmo estilo da folha anterior" para as demais, assim as 15 ilustrações ficam como uma série só.
