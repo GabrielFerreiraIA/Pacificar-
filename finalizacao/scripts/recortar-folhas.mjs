@@ -28,7 +28,7 @@ for (const f of folhas) {
     const dest = path.join(f.pasta, `${f.ids[i]}.png`);
     await sharp(arq)
       .extract({ left: col * w, top: row * h, width: w, height: h })
-      .resize(SAIDA_PX, SAIDA_PX, { fit: 'cover' })
+      .resize(Math.min(SAIDA_PX, w), Math.min(SAIDA_PX, h), { fit: 'cover' })
       .png()
       .toFile(dest);
     feitos++;

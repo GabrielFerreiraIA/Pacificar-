@@ -15,7 +15,10 @@
     "log:ultimos": "node finalizacao/scripts/log.mjs ultimos",
     "checklist": "node finalizacao/checklist/gerar.mjs",
     "imagens:pratos": "node finalizacao/scripts/otimizar-pratos.mjs",
-    "imagens:folhas": "node finalizacao/scripts/recortar-folhas.mjs"
+    "imagens:folhas": "node finalizacao/scripts/recortar-folhas.mjs",
+    "imagens:importar": "node finalizacao/scripts/importar-imagens.mjs",
+    "imagens:app": "node finalizacao/scripts/otimizar-imagens.mjs",
+    "imagens": "npm run imagens:folhas && npm run imagens:app && npm run imagens:pratos"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.4",
