@@ -3,6 +3,7 @@ import { useApp } from '../../context/AppContext';
 import { JOURNEY_DAYS } from '../../data/journeyDays';
 import { AudioPlayerDaily } from '../../components/audio/AudioPlayerDaily';
 import { MealCard } from '../../components/cards/MealCard';
+import { JourneyTimeline } from '../../components/journey/JourneyTimeline';
 import { AUDIO_ENABLED } from '../../config/features';
 import { MEAL_OPTIONS } from '../../data/mealOptions';
 import { SelfCareCard } from '../../components/cards/SelfCareCard';
@@ -98,66 +99,13 @@ export const HomeDailyPage: React.FC<HomeDailyPageProps> = ({
 
         <Progress value={progress} label="Progresso dos 21 dias" />
 
-        <div
-          className="no-scrollbar -mx-5 flex gap-2 overflow-x-auto px-5 py-1"
-          role="tablist"
-          aria-label="Selecionar dia"
-        >
-          {JOURNEY_DAYS.map(d => {
-            const active = selectedDay === d.day_number;
-            const logged = checkins.some(c => c.day_number === d.day_number);
-            const milestone = [7, 14, 21].includes(d.day_number);
-            const dayLocked = isLocked(d.day_number);
-
-            return (
-              <button
-                key={d.day_number}
-                role="tab"
-                aria-selected={active}
-                disabled={dayLocked}
-                aria-label={
-                  dayLocked
-                    ? `Dia ${d.day_number}, ainda bloqueado`
-                    : `Dia ${d.day_number}${logged ? ', check-in feito' : ''}`
-                }
-                onClick={() => setSelectedDay(d.day_number)}
-                className={`tap press relative flex h-14 w-12 shrink-0 flex-col items-center justify-center gap-1 rounded-field border ${
-                  dayLocked
-                    ? 'cursor-not-allowed border-line-soft bg-canvas text-ink-3/50'
-                    : active
-                      ? 'border-leaf-600 bg-leaf-600 text-white shadow-leaf'
-                      : logged
-                        ? 'border-leaf-200 bg-leaf-50 text-leaf-700'
-                        : 'border-line bg-surface text-ink-3 hover:border-leaf-200'
-                }`}
-              >
-                <span className="tnum text-[15px] font-bold leading-none">{d.day_number}</span>
-                {dayLocked ? (
-                  <Lock className="h-3 w-3" strokeWidth={2.5} aria-hidden="true" />
-                ) : logged ? (
-                  <Check
-                    className={`h-3 w-3 ${active ? 'text-leaf-100' : 'text-leaf-500'}`}
-                    strokeWidth={3}
-                    aria-hidden="true"
-                  />
-                ) : (
-                  <span
-                    className={`h-1 w-1 rounded-full ${active ? 'bg-white/60' : 'bg-line'}`}
-                    aria-hidden="true"
-                  />
-                )}
-                {milestone && (
-                  <span
-                    className={`absolute -top-0.5 right-1 h-1.5 w-1.5 rounded-full ${
-                      active ? 'bg-ochre-200' : 'bg-ochre-400'
-                    }`}
-                    aria-hidden="true"
-                  />
-                )}
-              </button>
-            );
-          })}
-        </div>
+        <JourneyTimeline
+          totalDays={JOURNEY_DAYS.length}
+          selectedDay={selectedDay}
+          unlockedUntil={unlockedUntil}
+          loggedDays={new Set(checkins.map(c => c.day_number))}
+          onSelect={setSelectedDay}
+        />
       </section>
 
       {/* ── Foco do dia ───────────────────────────────────────── */}
