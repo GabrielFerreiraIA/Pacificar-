@@ -26,6 +26,8 @@ export interface Question {
   options?: string[];
   /** Legenda didática sob cada opção — usada nos cards de escolha. */
   optionHints?: Record<string, string>;
+  /** Ilustração de cada opção (id do arquivo em public/anamnese). Opções sem entrada ficam sem imagem. */
+  optionImages?: Record<string, string>;
   placeholder?: string;
   required?: boolean;
   /** Mostra a pergunta somente quando outra resposta casa com o valor. */
@@ -335,7 +337,15 @@ export const ANAMNESE_SECTIONS: AnamneseSection[] = [
         label: 'Qual sabor você mais gosta?',
         hint: 'Os seis sabores (rasas) do Ayurveda indicam desequilíbrios dos doshas.',
         type: 'multi',
-        options: ['Doce', 'Salgado', 'Ácido', 'Picante', 'Amargo', 'Adstringente']
+        options: ['Doce', 'Salgado', 'Ácido', 'Picante', 'Amargo', 'Adstringente'],
+        optionImages: {
+          Doce: 'sabor-doce',
+          Salgado: 'sabor-salgado',
+          Ácido: 'sabor-acido',
+          Picante: 'sabor-picante',
+          Amargo: 'sabor-amargo',
+          Adstringente: 'sabor-adstringente'
+        }
       },
       {
         id: 'alimentos_agradam',
@@ -376,19 +386,36 @@ export const ANAMNESE_SECTIONS: AnamneseSection[] = [
         id: 'clima_desconfortavel',
         label: 'Qual tipo de clima você se sente mais desconfortável?',
         type: 'multi',
-        options: ['Frio', 'Quente', 'Seco', 'Chuvoso']
+        options: ['Frio', 'Quente', 'Seco', 'Chuvoso'],
+        optionImages: {
+          Frio: 'clima-frio',
+          Quente: 'clima-quente',
+          Seco: 'clima-seco',
+          Chuvoso: 'clima-chuvoso'
+        }
       },
       {
         id: 'tendencia_pele',
         label: 'Sua pele tem tendência predominante:',
         type: 'radio',
-        options: ['Seca', 'Oleosa', 'Média', 'Mista (certas áreas oleosas e outras secas)']
+        options: ['Seca', 'Oleosa', 'Média', 'Mista (certas áreas oleosas e outras secas)'],
+        optionImages: {
+          Seca: 'pele-seca',
+          Oleosa: 'pele-oleosa',
+          Média: 'pele-normal',
+          'Mista (certas áreas oleosas e outras secas)': 'pele-mista'
+        }
       },
       {
         id: 'exercicio_intensidade',
         label: 'Pratica exercício físico?',
         type: 'radio',
-        options: ['Suave', 'Moderado', 'Vigoroso', 'Não pratico']
+        options: ['Suave', 'Moderado', 'Vigoroso', 'Não pratico'],
+        optionImages: {
+          Suave: 'exercicio-suave',
+          Moderado: 'exercicio-moderado',
+          Vigoroso: 'exercicio-vigoroso'
+        }
       },
       {
         id: 'exercicio_frequencia',

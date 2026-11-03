@@ -171,6 +171,72 @@ export const ChoiceRow: React.FC<{
   </div>
 );
 
+/**
+ * Escolha com ilustração em cada cartão (única ou múltipla).
+ * A imagem vem de public/anamnese/<image>.webp; opção sem imagem mostra só o texto.
+ */
+export const ImageChoiceGrid: React.FC<{
+  options: { value: string; image?: string }[];
+  values: string[];
+  onToggle: (v: string) => void;
+  multiple?: boolean;
+  label: string;
+}> = ({ options, values, onToggle, multiple = false, label }) => {
+  const [quebradas, setQuebradas] = React.useState<Record<string, boolean>>({});
+  const cols = options.length === 3 || options.length >= 5 ? 'grid-cols-3' : 'grid-cols-2';
+  return (
+    <div role={multiple ? 'group' : 'radiogroup'} aria-label={label} className={`grid gap-2.5 ${cols}`}>
+      {options.map(opt => {
+        const selected = values.includes(opt.value);
+        // "Mista (certas áreas…)": o título fica curto e o resto vira legenda
+        const [titulo, ...resto] = opt.value.split(' (');
+        const legenda = resto.length ? '(' + resto.join(' (') : '';
+        const temImagem = !!opt.image && !quebradas[opt.value];
+        return (
+          <button
+            key={opt.value}
+            type="button"
+            role={multiple ? undefined : 'radio'}
+            aria-checked={multiple ? undefined : selected}
+            aria-pressed={multiple ? selected : undefined}
+            onClick={() => onToggle(opt.value)}
+            className={`tap press relative flex flex-col items-center gap-1.5 rounded-field border p-2.5 text-center ${temImagem ? "" : "justify-center"} ${
+              selected
+                ? 'border-leaf-500 bg-leaf-50 text-leaf-800 ring-1 ring-leaf-500'
+                : 'border-line bg-surface text-ink-2 hover:border-leaf-200 hover:bg-leaf-50/50'
+            }`}
+          >
+            {temImagem ? (
+              <img
+                src={`${import.meta.env.BASE_URL}anamnese/${opt.image}.webp`}
+                alt=""
+                width={384}
+                height={384}
+                loading="lazy"
+                decoding="async"
+                onError={() => setQuebradas(q => ({ ...q, [opt.value]: true }))}
+                className="aspect-square w-full rounded-[10px] bg-canvas object-contain"
+              />
+            ) : null}
+            <span className="block text-[13px] font-semibold leading-snug">{titulo}</span>
+            {legenda && <span className="-mt-1 block text-[11px] leading-snug text-ink-3">{legenda}</span>}
+            {selected && (
+              <span
+                className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-leaf-600"
+                aria-hidden="true"
+              >
+                <svg viewBox="0 0 12 12" className="h-3 w-3 text-white" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M2.5 6.2l2.4 2.4 4.6-5" />
+                </svg>
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+};
+
 /** Seleção múltipla em chips. */
 export const ChipGroup: React.FC<{
   options: string[];

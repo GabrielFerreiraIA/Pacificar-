@@ -34,6 +34,9 @@ interface PreparoPageProps {
 export const PreparoPage: React.FC<PreparoPageProps> = ({ onOpenNutrition, onStartJourney }) => {
   const { preparoChecked, togglePreparoItem } = useApp();
   const [openId, setOpenId] = useState<string | null>(PREPARO_ITEMS[0].id);
+  // Foto do item em public/preparo/<id>.webp; se faltar ou falhar, volta o ícone
+  const [semFoto, setSemFoto] = useState<Record<string, boolean>>({});
+  const fotoSrc = (id: string) => `${import.meta.env.BASE_URL}preparo/${id}.webp`;
 
   const essentials = PREPARO_ITEMS.filter(i => i.essential);
   const essentialsDone = essentials.filter(i => preparoChecked.includes(i.id)).length;
@@ -133,13 +136,28 @@ export const PreparoPage: React.FC<PreparoPageProps> = ({ onOpenNutrition, onSta
                     aria-expanded={open}
                     className="tap press flex min-w-0 flex-1 items-center gap-3 py-4 pl-2 pr-4 text-left"
                   >
-                    <span
-                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
-                        done ? 'bg-leaf-50 text-leaf-600' : 'bg-canvas text-ink-3'
-                      }`}
-                    >
-                      <Icon className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
-                    </span>
+                    {semFoto[item.id] ? (
+                      <span
+                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
+                          done ? 'bg-leaf-50 text-leaf-600' : 'bg-canvas text-ink-3'
+                        }`}
+                      >
+                        <Icon className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
+                      </span>
+                    ) : (
+                      <img
+                        src={fotoSrc(item.id)}
+                        alt=""
+                        width={800}
+                        height={600}
+                        loading="lazy"
+                        decoding="async"
+                        onError={() => setSemFoto(s => ({ ...s, [item.id]: true }))}
+                        className={`h-14 w-14 shrink-0 rounded-field bg-canvas object-cover transition-opacity ${
+                          done ? 'opacity-60' : ''
+                        }`}
+                      />
+                    )}
 
                     <span className="min-w-0 flex-1">
                       <span
@@ -168,6 +186,17 @@ export const PreparoPage: React.FC<PreparoPageProps> = ({ onOpenNutrition, onSta
 
                 {open && (
                   <div className="rise space-y-3.5 border-t border-line-soft px-4 pb-4 pt-4">
+                    {!semFoto[item.id] && (
+                      <img
+                        src={fotoSrc(item.id)}
+                        alt={item.title}
+                        width={800}
+                        height={600}
+                        decoding="async"
+                        onError={() => setSemFoto(s => ({ ...s, [item.id]: true }))}
+                        className="aspect-[4/3] w-full rounded-field bg-canvas object-cover"
+                      />
+                    )}
                     <div>
                       <p className="eyebrow mb-1.5">O que é</p>
                       <p className="text-[13.5px] leading-relaxed text-ink-2">{item.what}</p>

@@ -11,6 +11,7 @@ import {
   Card,
   ChipGroup,
   ChoiceRow,
+  ImageChoiceGrid,
   Field,
   Pill,
   Progress,
@@ -121,6 +122,16 @@ const QuestionField: React.FC<{
         );
 
       case 'radio': {
+        if (q.optionImages) {
+          return (
+            <ImageChoiceGrid
+              label={q.label}
+              options={(q.options ?? []).map(o => ({ value: o, image: q.optionImages?.[o] }))}
+              values={value ? [String(value)] : []}
+              onToggle={v => onChange(v)}
+            />
+          );
+        }
         const opts = (q.options ?? []).map(o => ({
           value: o,
           label: o,
@@ -139,6 +150,20 @@ const QuestionField: React.FC<{
       }
 
       case 'multi':
+        if (q.optionImages) {
+          return (
+            <ImageChoiceGrid
+              multiple
+              label={q.label}
+              options={(q.options ?? []).map(o => ({ value: o, image: q.optionImages?.[o] }))}
+              values={(value as string[]) ?? []}
+              onToggle={opt => {
+                const cur = (value as string[]) ?? [];
+                onChange(cur.includes(opt) ? cur.filter(v => v !== opt) : [...cur, opt]);
+              }}
+            />
+          );
+        }
         return (
           <ChipGroup
             label={q.label}

@@ -109,6 +109,12 @@ const CATEGORY_LABEL: Record<string, string> = {
   dinner: 'Jantar',
   tea: 'Chás'
 };
+/** Emblema do dosha (public/doshas) a partir do nome da massala: Vata, Pitta ou Kapha. */
+const doshaEmblema = (nome: string) => {
+  const m = nome.match(/Vata|Pitta|Kapha/);
+  return m ? `${import.meta.env.BASE_URL}doshas/dosha-${m[0].toLowerCase()}.webp` : null;
+};
+
 const categoryLabel = (c: string) => CATEGORY_LABEL[c] ?? c;
 
 /** Foto do prato (public/pratos); mini = miniatura leve para a lista. */
@@ -301,7 +307,21 @@ export const NutritionGuidePage: React.FC = () => {
               subtitle={massala.targetDosha}
             >
               <div className="space-y-4">
-                <p className="text-[13.5px] leading-relaxed text-ink-2">{massala.description}</p>
+                <div className="flex items-start gap-4">
+                  {doshaEmblema(massala.name) && (
+                    <img
+                      src={doshaEmblema(massala.name)!}
+                      alt=""
+                      width={512}
+                      height={512}
+                      loading="lazy"
+                      decoding="async"
+                      onError={e => (e.currentTarget.style.display = 'none')}
+                      className="h-24 w-24 shrink-0 rounded-field bg-canvas object-contain"
+                    />
+                  )}
+                  <p className="text-[13.5px] leading-relaxed text-ink-2">{massala.description}</p>
+                </div>
 
                 <div>
                   <p className="eyebrow mb-2">Ingredientes</p>
