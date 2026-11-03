@@ -17,6 +17,8 @@ export interface RecipeDBItem {
   instructions: string[];
   ayurvedicBenefits: string;
   tags: string[];
+  /** id da foto em public/pratos (ex.: 'l03'); ausente = receita sem foto. */
+  image?: string;
 }
 
 export const NUTRITION_GUIDELINES = {

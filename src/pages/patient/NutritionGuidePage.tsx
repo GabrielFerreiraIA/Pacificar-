@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import {
   NUTRITION_GUIDELINES,
   MASSALAS_DATA,
-  RECIPES_DATABASE,
+  RECIPES_DATABASE as RECEITAS_BASE,
   LABEL_TRAPS
 } from '../../data/nutritionData';
 import { SHOPPING_GROUPS } from '../../data/shoppingList';
@@ -99,6 +99,21 @@ const Disclosure: React.FC<{
   );
 };
 
+import { RECEITAS_PRATOS } from '../../data/receitasPratos';
+
+const RECIPES_DATABASE = [...RECEITAS_PRATOS, ...RECEITAS_BASE]; // com foto primeiro
+
+const CATEGORY_LABEL: Record<string, string> = {
+  breakfast: 'Café da manhã',
+  lunch: 'Almoço',
+  dinner: 'Jantar',
+  tea: 'Chás'
+};
+const categoryLabel = (c: string) => CATEGORY_LABEL[c] ?? c;
+
+/** Foto do prato (public/pratos); mini = miniatura leve para a lista. */
+const pratoSrc = (id: string, mini = false) => `${import.meta.env.BASE_URL}pratos/${mini ? 't/' : ''}${id}.webp`;
+
 export const NutritionGuidePage: React.FC = () => {
   const [tab, setTab] = useState<Tab>('guia');
   const [query, setQuery] = useState('');
@@ -117,6 +132,7 @@ export const NutritionGuidePage: React.FC = () => {
         !q ||
         r.title.toLowerCase().includes(q) ||
         r.description.toLowerCase().includes(q) ||
+        r.ingredients.some(i => i.toLowerCase().includes(q)) ||
         r.tags.some(t => t.toLowerCase().includes(q));
       return matchesQuery && (category === 'all' || r.category === category);
     });
@@ -342,7 +358,7 @@ export const NutritionGuidePage: React.FC = () => {
                     : 'border-line bg-surface text-ink-3 hover:border-leaf-200'
                 }`}
               >
-                {cat === 'all' ? 'Todas' : cat}
+                {cat === 'all' ? 'Todas' : categoryLabel(cat)}
               </button>
             ))}
           </div>
@@ -361,8 +377,20 @@ export const NutritionGuidePage: React.FC = () => {
                 <li key={r.id}>
                   <button
                     onClick={() => setOpenRecipe(r.id)}
-                    className="tap press card w-full p-4 text-left hover:border-leaf-300"
+                    className="tap press card flex w-full gap-3.5 p-3 text-left hover:border-leaf-300"
                   >
+                    {r.image && (
+                      <img
+                        src={pratoSrc(r.image, true)}
+                        alt=""
+                        width={240}
+                        height={180}
+                        loading="lazy"
+                        decoding="async"
+                        className="h-[88px] w-[88px] shrink-0 rounded-field bg-canvas object-cover"
+                      />
+                    )}
+                    <div className="min-w-0 flex-1 py-1">
                     <div className="flex items-start justify-between gap-3">
                       <h4 className="text-[15px] font-semibold leading-snug text-ink">{r.title}</h4>
                       <span className="tnum inline-flex shrink-0 items-center gap-1 text-[11.5px] font-semibold text-ink-3">
@@ -377,6 +405,7 @@ export const NutritionGuidePage: React.FC = () => {
                           {t}
                         </Pill>
                       ))}
+                    </div>
                     </div>
                   </button>
                 </li>
@@ -435,7 +464,7 @@ export const NutritionGuidePage: React.FC = () => {
           >
             <header className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-line bg-surface/95 px-5 py-4 backdrop-blur">
               <div className="min-w-0">
-                <p className="eyebrow">{recipe.category}</p>
+                <p className="eyebrow">{categoryLabel(recipe.category)}</p>
                 <h3 id="recipe-title" className="mt-1 text-[20px] leading-snug">
                   {recipe.title}
                 </h3>
@@ -448,6 +477,17 @@ export const NutritionGuidePage: React.FC = () => {
                 <X className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
               </button>
             </header>
+
+            {recipe.image && (
+              <img
+                src={pratoSrc(recipe.image)}
+                alt={recipe.title}
+                width={800}
+                height={600}
+                decoding="async"
+                className="aspect-[4/3] w-full bg-canvas object-cover"
+              />
+            )}
 
             <div className="space-y-6 px-5 py-5">
               <p className="text-[14px] leading-relaxed text-ink-2">{recipe.description}</p>
