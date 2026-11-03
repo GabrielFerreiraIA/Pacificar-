@@ -10,6 +10,8 @@ interface MealCardProps {
   tip?: string;
   /** Opções sugeridas pela Ana (mesma ordem de src/data/mealOptions.ts). Cada uma tem foto em public/pratos. */
   options?: string[];
+  /** Dia da jornada: define qual opção vira a "sugestão do dia" (gira entre as opções). */
+  dayNumber?: number;
 }
 
 const CONFIG = {
@@ -24,12 +26,15 @@ const fotoId = (type: MealType, i: number) => `${CONFIG[type].prefix}${String(i 
 const fotoSrc = (type: MealType, i: number, mini = false) =>
   `${import.meta.env.BASE_URL}pratos/${mini ? 't/' : ''}${fotoId(type, i)}.webp`;
 
-export const MealCard: React.FC<MealCardProps> = ({ type, title, desc, tip, options }) => {
+export const MealCard: React.FC<MealCardProps> = ({ type, title, desc, tip, options, dayNumber = 1 }) => {
   const { label, time, icon: Icon, accent } = CONFIG[type];
   const hasOptions = !!options && options.length > 0;
 
-  // -1 = refeição do dia (sem foto); 0..n-1 = opção da Ana (com foto)
-  const [pick, setPick] = useState(-1);
+  // A sugestão do dia é sempre uma opção da Ana (todas têm foto) e gira conforme o dia da jornada.
+  const suggested = hasOptions ? (((dayNumber - 1) % options!.length) + options!.length) % options!.length : -1;
+  // Faixa de miniaturas: a sugestão do dia primeiro, depois as demais em ordem.
+  const order = hasOptions ? options!.map((_, k) => (suggested + k) % options!.length) : [];
+  const [pick, setPick] = useState(suggested);
   const [loaded, setLoaded] = useState(false);
   const [broken, setBroken] = useState<Record<number, boolean>>({});
 
@@ -85,7 +90,7 @@ export const MealCard: React.FC<MealCardProps> = ({ type, title, desc, tip, opti
 
       <div className="flex flex-col gap-3 p-5">
         <div className="min-w-0">
-          {alt && <p className="eyebrow mb-1">Sugestão da Ana</p>}
+          {alt && <p className="eyebrow mb-1">{pick === suggested ? 'Sugestão de hoje' : 'Outra opção da Ana'}</p>}
           <h4 className="text-[15px] font-semibold leading-snug text-ink">{alt ?? title}</h4>
           {!alt && <p className="mt-1.5 text-[13px] leading-relaxed text-ink-2">{desc}</p>}
           {alt && (
@@ -104,27 +109,15 @@ export const MealCard: React.FC<MealCardProps> = ({ type, title, desc, tip, opti
 
         {hasOptions && (
           <div>
-            <p className="eyebrow mb-2">Outras opções · {options!.length}</p>
+            <p className="eyebrow mb-2">Trocar o prato · {options!.length} opções</p>
             <div className="no-scrollbar -mx-5 flex snap-x scroll-px-5 gap-2.5 overflow-x-auto px-5 py-1.5">
-              <button
-                type="button"
-                onClick={() => choose(-1)}
-                aria-pressed={pick === -1}
-                aria-label="Cardápio do dia"
-                className={`tap press flex h-[68px] w-[68px] shrink-0 snap-start flex-col items-center justify-center gap-1 rounded-field text-[10.5px] font-bold uppercase tracking-wide ${accent} ${
-                  pick === -1 ? 'ring-2 ring-leaf-600 ring-offset-2 ring-offset-canvas-2' : ''
-                }`}
-              >
-                <Icon className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" />
-                Do dia
-              </button>
-              {options!.map((name, i) => (
+              {order.map((i) => (
                 <button
-                  key={name}
+                  key={options![i]}
                   type="button"
                   onClick={() => choose(i)}
                   aria-pressed={pick === i}
-                  aria-label={name}
+                  aria-label={options![i]}
                   className={`press relative h-[68px] w-[68px] shrink-0 snap-start overflow-hidden rounded-field bg-canvas ${
                     pick === i ? 'ring-2 ring-leaf-600 ring-offset-2 ring-offset-canvas-2' : ''
                   }`}
@@ -140,6 +133,11 @@ export const MealCard: React.FC<MealCardProps> = ({ type, title, desc, tip, opti
                       onError={() => setBroken((b) => ({ ...b, [i]: true }))}
                       className="h-full w-full object-cover"
                     />
+                  )}
+                  {i === suggested && (
+                    <span className="absolute inset-x-0 bottom-0 bg-leaf-700/85 py-0.5 text-center text-[9.5px] font-bold uppercase tracking-wide text-white">
+                      Hoje
+                    </span>
                   )}
                 </button>
               ))}

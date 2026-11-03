@@ -202,9 +202,9 @@ export const HomeDailyPage: React.FC<HomeDailyPageProps> = ({
         />
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <MealCard type="breakfast" {...day.meals.breakfast} options={MEAL_OPTIONS.breakfast} />
-          <MealCard type="lunch" {...day.meals.lunch} options={MEAL_OPTIONS.lunch} />
-          <MealCard type="dinner" {...day.meals.dinner} options={MEAL_OPTIONS.dinner} />
+          <MealCard key={`breakfast-${day.day_number}`} type="breakfast" {...day.meals.breakfast} options={MEAL_OPTIONS.breakfast} dayNumber={day.day_number} />
+          <MealCard key={`lunch-${day.day_number}`} type="lunch" {...day.meals.lunch} options={MEAL_OPTIONS.lunch} dayNumber={day.day_number} />
+          <MealCard key={`dinner-${day.day_number}`} type="dinner" {...day.meals.dinner} options={MEAL_OPTIONS.dinner} dayNumber={day.day_number} />
           {day.meals.tea_or_snack && (
             <MealCard type="tea_or_snack" {...day.meals.tea_or_snack} />
           )}
