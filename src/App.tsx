@@ -98,6 +98,8 @@ const AppContent: React.FC = () => {
   }, [showTour]);
   const [subScreen, setSubScreen] = useState<SubScreen>('none');
   const [reportWeek, setReportWeek] = useState(1);
+  // receita a abrir ao ir para Nutrição (botão "Ver receita" da Home)
+  const [recipeToOpen, setRecipeToOpen] = useState<string | null>(null);
   const [checkinDay, setCheckinDay] = useState(6);
 
   const closeSub = () => setSubScreen('none');
@@ -147,6 +149,10 @@ const AppContent: React.FC = () => {
                 }}
                 onOpenReport={openReport}
                 onOpenNutrition={() => goToTab('nutricao')}
+                onOpenRecipe={id => {
+                  setRecipeToOpen(id);
+                  goToTab('nutricao');
+                }}
               />
             )}
 
@@ -161,7 +167,12 @@ const AppContent: React.FC = () => {
               <AnamnesePage onOpenExams={() => setSubScreen('exams')} />
             )}
 
-            {activeTab === 'nutricao' && <NutritionGuidePage />}
+            {activeTab === 'nutricao' && (
+              <NutritionGuidePage
+                initialRecipe={recipeToOpen}
+                onInitialRecipeConsumed={() => setRecipeToOpen(null)}
+              />
+            )}
 
             {activeTab === 'protocolos' && <ProtocolsPage />}
 

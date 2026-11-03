@@ -23,12 +23,15 @@ interface HomeDailyPageProps {
   onOpenCheckin: (dayNumber: number) => void;
   onOpenReport: (weekNumber: number) => void;
   onOpenNutrition: () => void;
+  /** Abre a receita do prato do dia (aba Nutrição → Receitas). */
+  onOpenRecipe: (recipeId: string) => void;
 }
 
 export const HomeDailyPage: React.FC<HomeDailyPageProps> = ({
   onOpenCheckin,
   onOpenReport,
-  onOpenNutrition
+  onOpenNutrition,
+  onOpenRecipe
 }) => {
   const { currentUser, selectedDay, setSelectedDay, checkins } = useApp();
 
@@ -202,9 +205,9 @@ export const HomeDailyPage: React.FC<HomeDailyPageProps> = ({
         />
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <MealCard key={`breakfast-${day.day_number}`} type="breakfast" {...day.meals.breakfast} options={MEAL_OPTIONS.breakfast} dayNumber={day.day_number} />
-          <MealCard key={`lunch-${day.day_number}`} type="lunch" {...day.meals.lunch} options={MEAL_OPTIONS.lunch} dayNumber={day.day_number} />
-          <MealCard key={`dinner-${day.day_number}`} type="dinner" {...day.meals.dinner} options={MEAL_OPTIONS.dinner} dayNumber={day.day_number} />
+          <MealCard key={`breakfast-${day.day_number}`} type="breakfast" {...day.meals.breakfast} options={MEAL_OPTIONS.breakfast} dayNumber={day.day_number} onOpenRecipe={onOpenRecipe} />
+          <MealCard key={`lunch-${day.day_number}`} type="lunch" {...day.meals.lunch} options={MEAL_OPTIONS.lunch} dayNumber={day.day_number} onOpenRecipe={onOpenRecipe} />
+          <MealCard key={`dinner-${day.day_number}`} type="dinner" {...day.meals.dinner} options={MEAL_OPTIONS.dinner} dayNumber={day.day_number} onOpenRecipe={onOpenRecipe} />
           {day.meals.tea_or_snack && (
             <MealCard type="tea_or_snack" {...day.meals.tea_or_snack} />
           )}

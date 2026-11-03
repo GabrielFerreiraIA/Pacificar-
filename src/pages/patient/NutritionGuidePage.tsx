@@ -1,8 +1,10 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useApp } from '../../context/AppContext';
 import {
   NUTRITION_GUIDELINES,
   MASSALAS_DATA,
   RECIPES_DATABASE as RECEITAS_BASE,
+  type RecipeDBItem,
   LABEL_TRAPS
 } from '../../data/nutritionData';
 import { SHOPPING_GROUPS } from '../../data/shoppingList';
@@ -23,6 +25,7 @@ import {
   Sparkles,
   Wrench,
   X,
+  Lock,
   ShieldAlert,
   SearchX
 } from 'lucide-react';
@@ -120,20 +123,55 @@ const categoryLabel = (c: string) => CATEGORY_LABEL[c] ?? c;
 /** Foto do prato (public/pratos); mini = miniatura leve para a lista. */
 const pratoSrc = (id: string, mini = false) => `${import.meta.env.BASE_URL}pratos/${mini ? 't/' : ''}${id}.webp`;
 
-export const NutritionGuidePage: React.FC = () => {
-  const [tab, setTab] = useState<Tab>('guia');
+const CAT_ORDER: Record<string, number> = { breakfast: 0, lunch: 1, dinner: 2 };
+
+interface NutritionGuidePageProps {
+  /** Receita a abrir ao entrar (vem do botão "Ver receita" da Home). */
+  initialRecipe?: string | null;
+  onInitialRecipeConsumed?: () => void;
+}
+
+export const NutritionGuidePage: React.FC<NutritionGuidePageProps> = ({ initialRecipe, onInitialRecipeConsumed }) => {
+  const { currentUser, role } = useApp();
+  // Cada dia libera as receitas do prato daquele dia; a terapeuta vê tudo.
+  const unlockedUntil = role === 'admin' ? 21 : (currentUser?.current_day ?? 1);
+  const isLocked = (r: RecipeDBItem) => r.day != null && r.day > unlockedUntil;
+
+  const [tab, setTab] = useState<Tab>(initialRecipe ? 'receitas' : 'guia');
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('all');
-  const [openRecipe, setOpenRecipe] = useState<string | null>(null);
+  const [openRecipe, setOpenRecipe] = useState<string | null>(initialRecipe ?? null);
+
+  useEffect(() => {
+    if (!initialRecipe) return;
+    setTab('receitas');
+    setOpenRecipe(initialRecipe);
+    onInitialRecipeConsumed?.();
+  }, [initialRecipe]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const categories = useMemo(
     () => ['all', ...Array.from(new Set(RECIPES_DATABASE.map(r => r.category)))],
     []
   );
 
+  // Liberadas do dia mais novo para o mais antigo, depois as clássicas da Ana, depois as bloqueadas em ordem de abertura
+  const ordered = useMemo(() => {
+    const porDia = RECIPES_DATABASE.filter(r => r.day != null);
+    const classicas = RECIPES_DATABASE.filter(r => r.day == null);
+    const cmp = (a: RecipeDBItem, b: RecipeDBItem) => (CAT_ORDER[a.category] ?? 9) - (CAT_ORDER[b.category] ?? 9);
+    const liberadas = porDia.filter(r => !isLocked(r)).sort((a, b) => b.day! - a.day! || cmp(a, b));
+    const bloqueadas = porDia.filter(isLocked).sort((a, b) => a.day! - b.day! || cmp(a, b));
+    return [...liberadas, ...classicas, ...bloqueadas];
+  }, [unlockedUntil]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const totalPorDia = RECIPES_DATABASE.filter(r => r.day != null).length;
+  const liberadasPorDia = RECIPES_DATABASE.filter(r => r.day != null && !isLocked(r)).length;
+
   const recipes = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return RECIPES_DATABASE.filter(r => {
+    return ordered.filter(r => {
+      // a busca nunca revela o conteúdo de uma receita ainda bloqueada
+      if (q && isLocked(r)) return false;
       const matchesQuery =
         !q ||
         r.title.toLowerCase().includes(q) ||
@@ -142,9 +180,9 @@ export const NutritionGuidePage: React.FC = () => {
         r.tags.some(t => t.toLowerCase().includes(q));
       return matchesQuery && (category === 'all' || r.category === category);
     });
-  }, [query, category]);
+  }, [query, category, ordered]);
 
-  const recipe = RECIPES_DATABASE.find(r => r.id === openRecipe);
+  const recipe = RECIPES_DATABASE.find(r => r.id === openRecipe && !isLocked(r));
 
   return (
     <div className="space-y-7 pb-8">
@@ -347,6 +385,24 @@ export const NutritionGuidePage: React.FC = () => {
       {/* ── Receitas ───────────────────────────────────────────── */}
       {tab === 'receitas' && (
         <div className="space-y-4">
+          <Card className="flex items-center gap-4">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-leaf-50 text-leaf-600">
+              <Lock className="h-[18px] w-[18px]" strokeWidth={1.8} aria-hidden="true" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-[14px] font-semibold text-ink">
+                {role === 'admin'
+                  ? 'Visão da terapeuta: todas as receitas abertas'
+                  : `${liberadasPorDia} de ${totalPorDia} receitas liberadas`}
+              </p>
+              <p className="mt-0.5 text-[12.5px] leading-relaxed text-ink-3">
+                {role === 'admin'
+                  ? 'Para a paciente, cada dia abre as receitas do prato daquele dia.'
+                  : 'Cada dia da jornada abre as receitas do café, do almoço e do jantar daquele dia. As próximas aparecem com cadeado.'}
+              </p>
+            </div>
+          </Card>
+
           <div className="relative">
             <Search
               className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-3"
@@ -395,6 +451,38 @@ export const NutritionGuidePage: React.FC = () => {
             <ul className="space-y-2.5">
               {recipes.map(r => (
                 <li key={r.id}>
+                  {isLocked(r) ? (
+                    <div
+                      aria-disabled="true"
+                      className="card flex w-full items-center gap-3.5 bg-canvas/60 p-3 opacity-80"
+                    >
+                      <span className="relative h-[88px] w-[88px] shrink-0 overflow-hidden rounded-field bg-canvas">
+                        {r.image && (
+                          <img
+                            src={pratoSrc(r.image, true)}
+                            alt=""
+                            width={240}
+                            height={180}
+                            loading="lazy"
+                            decoding="async"
+                            className="h-full w-full scale-110 object-cover blur-md"
+                          />
+                        )}
+                        <span className="absolute inset-0 flex items-center justify-center bg-ink/25 text-white">
+                          <Lock className="h-6 w-6" strokeWidth={2} aria-hidden="true" />
+                        </span>
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="eyebrow">Receita do Dia {r.day}</p>
+                        <h4 className="mt-1 text-[15px] font-semibold leading-snug text-ink-2">
+                          {categoryLabel(r.category)} · bloqueada
+                        </h4>
+                        <p className="mt-1 text-[12.5px] leading-relaxed text-ink-3">
+                          Abre no Dia {r.day} da jornada.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
                   <button
                     onClick={() => setOpenRecipe(r.id)}
                     className="tap press card flex w-full gap-3.5 p-3 text-left hover:border-leaf-300"
@@ -411,7 +499,8 @@ export const NutritionGuidePage: React.FC = () => {
                       />
                     )}
                     <div className="min-w-0 flex-1 py-1">
-                    <div className="flex items-start justify-between gap-3">
+                    {r.day != null && <p className="eyebrow mb-1">Dia {r.day}</p>}
+                    <div className="flex flex-col-reverse items-start gap-1">
                       <h4 className="text-[15px] font-semibold leading-snug text-ink">{r.title}</h4>
                       <span className="tnum inline-flex shrink-0 items-center gap-1 text-[11.5px] font-semibold text-ink-3">
                         <Clock className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" />
@@ -428,6 +517,7 @@ export const NutritionGuidePage: React.FC = () => {
                     </div>
                     </div>
                   </button>
+                  )}
                 </li>
               ))}
             </ul>

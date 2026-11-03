@@ -26,7 +26,8 @@ const R = (
   instructions,
   ayurvedicBenefits,
   tags: ['Sem Glúten', 'Sem Lactose', ...tags],
-  image: `${id}`
+  image: `${id}`,
+  day: Number(id.slice(1))
 });
 
 export const RECEITAS_PRATOS: RecipeDBItem[] = [
@@ -336,3 +337,13 @@ export const RECEITAS_PRATOS: RecipeDBItem[] = [
     ['Cozinhe os legumes com cebola, alho e louro por 20 minutos.', 'Em água quase fervendo, faça o ovo pochê por 3 minutos.', 'Refogue as folhas no Ghee.', 'Sirva o caldo com o ovo e as folhas.'],
     'Caldo leve e acolhedor, ideal para noites em que o apetite é pequeno.', ['Jantar', 'Caldo'])
 ];
+
+/**
+ * Receita liberada em cada dia da jornada: o prato do dia (mesma regra do cartão de refeição da Home).
+ * A Ana enviou 20 pratos por refeição; o Dia 21 repete o do Dia 1.
+ */
+export const idReceitaDoDia = (cat: Cat, dia: number): string => {
+  const prefix = { breakfast: 'b', lunch: 'l', dinner: 'd' }[cat];
+  const n = ((((dia - 1) % 20) + 20) % 20) + 1;
+  return `${prefix}${String(n).padStart(2, '0')}`;
+};

@@ -19,6 +19,8 @@ export interface RecipeDBItem {
   tags: string[];
   /** id da foto em public/pratos (ex.: 'l03'); ausente = receita sem foto. */
   image?: string;
+  /** Dia da jornada em que a receita é liberada; ausente = sempre liberada. */
+  day?: number;
 }
 
 export const NUTRITION_GUIDELINES = {
