@@ -6,6 +6,8 @@ import {
   Question
 } from '../../data/anamneseSchema';
 import { BristolSelector } from '../../components/bristol/BristolSelector';
+import { AnamneseIntroDialog } from '../../components/onboarding/AnamneseIntroDialog';
+import { WELCOME_VIDEO_ENABLED } from '../../config/features';
 import {
   Button,
   Card,
@@ -318,6 +320,7 @@ export const AnamnesePage: React.FC<AnamnesePageProps> = ({ onOpenExams }) => {
 
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [videoWatched, setVideoWatched] = useState(false);
+  const [introOpen, setIntroOpen] = useState(false);
   const [attempted, setAttempted] = useState(false);
   const topRef = useRef<HTMLDivElement>(null);
 
@@ -463,16 +466,44 @@ export const AnamnesePage: React.FC<AnamnesePageProps> = ({ onOpenExams }) => {
             ao Pacificar
           </h2>
           <p className="mt-3 max-w-[44ch] text-[14.5px] leading-relaxed text-ink-2">
-            Antes de começar, assista dois minutos com a Ana. Ela explica como a jornada funciona e
-            como preencher sua anamnese.
+            {WELCOME_VIDEO_ENABLED
+              ? 'Antes de começar, assista dois minutos com a Ana. Ela explica como a jornada funciona e como preencher sua anamnese.'
+              : 'Esse é o nosso primeiro passo: você me conta como está a sua saúde, e eu monto a jornada em cima da sua história. Sem pressa, no seu tempo.'}
           </p>
         </header>
 
-        <WelcomeVideo />
+        {WELCOME_VIDEO_ENABLED ? (
+          <WelcomeVideo />
+        ) : (
+          <Card className="grid grid-cols-3 gap-2 text-center">
+            <div>
+              <p className="tnum font-display text-[26px] leading-none text-ink">{sections.length}</p>
+              <p className="mt-1.5 text-[12px] leading-snug text-ink-3">blocos curtinhos</p>
+            </div>
+            <div>
+              <p className="tnum font-display text-[26px] leading-none text-ink">~{overall.total}</p>
+              <p className="mt-1.5 text-[12px] leading-snug text-ink-3">respostas</p>
+            </div>
+            <div>
+              <p className="font-display text-[26px] leading-none text-ink">Auto</p>
+              <p className="mt-1.5 text-[12px] leading-snug text-ink-3">salvo sozinho</p>
+            </div>
+          </Card>
+        )}
 
-        <Button full size="lg" iconRight={ArrowRight} onClick={() => setVideoWatched(true)}>
+        <Button full size="lg" iconRight={ArrowRight} onClick={() => setIntroOpen(true)}>
           Iniciar minha anamnese
         </Button>
+
+        {introOpen && (
+          <AnamneseIntroDialog
+            onClose={() => setIntroOpen(false)}
+            onConfirm={() => {
+              setIntroOpen(false);
+              setVideoWatched(true);
+            }}
+          />
+        )}
       </div>
     );
   }
