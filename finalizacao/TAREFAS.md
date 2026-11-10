@@ -70,7 +70,7 @@ Use os comandos em vez de editar à mão:  npm run tarefa -- iniciar|concluir|bl
   - URL `APP_URL/api/kiwify-webhook`, eventos: compra aprovada, reembolsada e chargeback. Token copiado para `KIWIFY_WEBHOOK_TOKEN` na Vercel.
 - [ ] **T-33** Teste de ponta a ponta de compra · @gabriel · dep: T-32, T-22
   - Compra real com cupom de 100% → e-mail chega → define senha → entra → reembolso → acesso suspenso.
-- [~] **T-34** Webhook da Eduzz `api/eduzz-webhook.ts` (substitui a Kiwify) · @agente · dep: T-12 · em andamento: claude (2026-11-09)
+- [x] **T-34** Webhook da Eduzz `api/eduzz-webhook.ts` (substitui a Kiwify) · @agente · dep: T-12 · concluída: claude (2026-11-09)
   - Assinatura `x-signature` (HMAC-SHA256 do corpo), eventos `myeduzz.invoice_paid`, `_refunded`, `_chargeback`, `_canceled`. Idempotente por `(order_id, event)`. Testes locais com payload fictício.
 - [ ] **T-35** Cadastrar o produto e o webhook na Eduzz · @gabriel · dep: T-34, T-04
   - Passo a passo em `finalizacao/GO-LIVE-EDUZZ.md`. Chave secreta em `EDUZZ_WEBHOOK_SECRET` na Vercel.
@@ -141,6 +141,6 @@ Use os comandos em vez de editar à mão:  npm run tarefa -- iniciar|concluir|bl
 - [x] **T-83** Manual da Ana (ver pacientes, prescrever, suspender acesso) · @agente · dep: T-57 · concluída: claude (2026-09-24)
 - [ ] **T-84** Primeira venda real acompanhada e 7 dias de monitoramento · @gabriel @ana · dep: T-33, T-43, T-60, T-74
 - [x] **T-85** Modo demo para a Ana na Vercel (VITE_DEMO) e subida no GitHub · @agente · dep: — · concluída: claude (2026-10-01)
-  - `VITE_DEMO=true` liga a demonstração (dados fictícios, salva no navegador) no build de produção. Sem a variável, o `mockData` sai do bundle. Ao tirar o botão: apagar `VITE_DEMO` na Vercel e redeploy.
-- [~] **T-86** Modo demo escondido (gesto secreto) em vez do botão · @agente · dep: T-85 · em andamento: claude (2026-11-09)
+  - `VITE_DEMO=true` liga a demonstração (dados fictícios, salva no navegador) no build de produção. Sem a variável, o `mockData` sai do bundle. Substituída pela T-86 (gesto secreto).
+- [x] **T-86** Modo demo escondido (gesto secreto) em vez do botão · @agente · dep: T-85 · concluída: claude (2026-11-09)
   - Sem botão na tela de login. Cinco toques no logo abrem a demo. Os dados fictícios ficam num chunk separado, baixado só quando a demo é aberta.
