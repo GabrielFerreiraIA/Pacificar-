@@ -1,7 +1,7 @@
 # Go-live do PACIFICAR com a Eduzz
 
 > Para o Gabriel. Escrito em 09/11/2026 (sessão T-34 / T-86).
-> Ordem de execução: **1 → 2 → 3 → 4 → 5 → 6 → 7**. Não pule a etapa 1: sem o Supabase, nada funciona.
+> Ordem de execução: **1 → 2 → 3 → 4 → 5 → 6 → 7**. Na seção 3, os passos 3.1 e 3.2 **já foram feitos**: comece pelo 3.3.
 
 ## 0. Onde estamos
 
@@ -10,7 +10,7 @@
 | App (login, anamnese, check-in, exames, painel da Ana, LGPD, PWA) | Pronto |
 | Webhook da Eduzz `api/eduzz-webhook.ts` | **Pronto e testado localmente** (assinatura, eventos, idempotência) |
 | Modo demo | **Escondido**: não há mais botão. Ver seção 8 |
-| Supabase | ⚠️ **Fora do ar.** O endereço do projeto (`zuho….supabase.co`) não existe mais na internet. Quase certamente foi **pausado por inatividade**: o keep-alive só roda depois do deploy na Vercel, que ainda não aconteceu |
+| Supabase | ✅ **Restaurado em 09/11.** Todas as migrations aplicadas (inclusive Eduzz). Keep-alive interno ligado: `pg_cron` a cada 6h grava no `heartbeat` e chama a API do projeto (T-44), então ele não pausa mais nem antes do deploy |
 | Vercel, Eduzz, e-mail (Resend) | Falta configurar (seções 3 a 6) |
 
 **Como funciona a compra, do começo ao fim:**
@@ -148,7 +148,7 @@ Gerar um segredo aleatório (PowerShell):
 
 ## 3. Supabase (primeiro, sem ele nada funciona)
 
-### 3.1 Restaurar ou recriar o projeto
+### 3.1 Restaurar ou recriar o projeto ✅ feito em 09/11 (fica como referência se acontecer de novo)
 
 1. Entre em supabase.com/dashboard.
 2. **Se o projeto aparece como "Paused":** clique em **Restore project** e espere uns minutos. As chaves continuam as mesmas. Vá para o passo 3.2 e aplique **só** a migration nova.
@@ -157,7 +157,7 @@ Gerar um segredo aleatório (PowerShell):
    - Atualize também o `SUPABASE_DB_URL` (Connect → Session pooler) usado no backup.
    - No passo 3.2, aplique **todas** as migrations.
 
-### 3.2 Aplicar as migrations
+### 3.2 Aplicar as migrations ✅ feito em 09/11
 
 No painel: **SQL Editor → New query**, cole o conteúdo de cada arquivo e rode, **nesta ordem**:
 
@@ -169,6 +169,7 @@ No painel: **SQL Editor → New query**, cole o conteúdo de cada arquivo e rode
 | `supabase/migrations/20260924042845_storage_exames.sql` | — | rodar |
 | `supabase/migrations/20260924105403_pedidos_exclusao.sql` | — | rodar |
 | `supabase/migrations/20261109120000_eduzz.sql` | **rodar** | rodar |
+| `supabase/migrations/20261109230000_keepalive_cron.sql` | **rodar** | rodar (e cadastrar os 2 segredos do Vault descritos no topo do arquivo) |
 
 Confirmação: em **Table Editor → profiles**, a coluna `eduzz_invoice_id` existe (e `kiwify_order_id` não).
 
@@ -314,13 +315,14 @@ Se o passo 3 falhar, veja a seção 9.
 | `"resultado":"ignorado: outro produto"` | `EDUZZ_PRODUCT_IDS` com ID errado | Confira o ID do produto, corrija e reenvie |
 | Convite chega, mas o link abre página de erro | Redirect URL faltando no Supabase | Seção 3.3 |
 | Pessoa diz que não recebeu o e-mail | Spam ou e-mail digitado errado na compra | Supabase → Authentication → Users: se o e-mail está lá, clique em "Send magic link/invite" de novo |
-| Supabase pausou de novo | Keep-alive parado | Seção 4.3. Veja a tabela `heartbeat` |
+| Supabase pausou de novo | Keep-alive parado | Seção 4.3. Veja a tabela `heartbeat`: deve ter linhas `supabase-cron` a cada 6h. No SQL Editor: `select * from cron.job_run_details order by start_time desc limit 5` e `select status_code from net._http_response order by created desc limit 5` |
 
 ---
 
 ## 10. Checklist dos 100%
 
-- [ ] Supabase ativo, migrations aplicadas, `eduzz_invoice_id` existe
+- [x] Supabase ativo, migrations aplicadas, `eduzz_invoice_id` existe
+- [x] Keep-alive interno (`pg_cron`) gravando no `heartbeat` a cada 6h
 - [ ] Cadastro público desligado e URLs de redirect configuradas
 - [ ] Resend verificado e convite de teste chegando na caixa de entrada
 - [ ] Repositório privado e push feito

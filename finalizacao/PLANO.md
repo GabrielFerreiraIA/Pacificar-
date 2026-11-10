@@ -32,6 +32,7 @@ Levar o protótipo atual (100% `localStorage`, sem login) a um produto vendável
  Paciente (PWA) ──anon key + sessão──▶ Supabase (Postgres com RLS, Storage "exames")
  Vercel Cron (1x/dia) ─┐
  GitHub Actions (12h) ─┴──▶ Vercel /api/keepalive ──▶ insert/select na tabela heartbeat
+ Supabase pg_cron (6h) ──▶ insert no heartbeat + pg_net POST /rest/v1/rpc/keepalive_status
  Áudios da jornada ──▶ arquivos estáticos em public/audio (servidos pela CDN da Vercel)
 ```
 
@@ -47,7 +48,7 @@ Levar o protótipo atual (100% `localStorage`, sem login) a um produto vendável
 | D1 | Login por **convite** (`auth.admin.inviteUserByEmail`) disparado pelo webhook | A pessoa define a própria senha, e não trafega senha por e-mail |
 | D2 | Reembolso/chargeback **suspende** o acesso (`profiles.access_status = 'revoked'`), não apaga | Preserva o histórico clínico e permite reativar |
 | D3 | Idempotência do webhook pela chave única `purchases (order_id, event)` | A plataforma de venda reenvia eventos. Aprovação e reembolso chegam com o mesmo `order_id`, então a unicidade só por pedido descartaria o reembolso. |
-| D4 | Keep-alive com **duas fontes**: Vercel Cron diário + GitHub Actions a cada 12h | A Vercel Hobby só permite cron 1x/dia, com horário impreciso. A redundância garante margem folgada dentro da janela de 7 dias. |
+| D4 | Keep-alive com **três fontes**: Vercel Cron diário + GitHub Actions a cada 12h + `pg_cron` no próprio Supabase a cada 6h (T-44) | A Vercel Hobby só permite cron 1x/dia, com horário impreciso. O `pg_cron` funciona mesmo sem deploy (o projeto pausou em out/2026 por isso) e, além de gravar no `heartbeat`, faz uma chamada HTTP real à API REST via `pg_net`, porque escrita interna sozinha pode não contar como atividade. |
 | D5 | O keep-alive faz **escrita e leitura reais** no Postgres, não só um ping HTTP | O Supabase mede "atividade de banco". Um ping sem query pode não contar. |
 | D6 | Áudios em `public/audio/` (mp3 mono 64 kbps), **não** no Supabase Storage | O plano gratuito do Supabase tem 5 GB/mês de egress. 100 pacientes × 21 áudios estouram isso. A Vercel tem 100 GB. |
 | D7 | Repositório **privado** no GitHub | Os outros repos do usuário são públicos. Este tem regra de negócio de cliente e config de pagamento. |
