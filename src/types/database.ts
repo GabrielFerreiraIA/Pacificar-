@@ -445,7 +445,7 @@ export type Database = {
           height: number | null
           id: string
           journey_start_date: string | null
-          kiwify_order_id: string | null
+          eduzz_invoice_id: string | null
           phone: string | null
           role: string
           updated_at: string
@@ -462,7 +462,7 @@ export type Database = {
           height?: number | null
           id: string
           journey_start_date?: string | null
-          kiwify_order_id?: string | null
+          eduzz_invoice_id?: string | null
           phone?: string | null
           role?: string
           updated_at?: string
@@ -479,7 +479,7 @@ export type Database = {
           height?: number | null
           id?: string
           journey_start_date?: string | null
-          kiwify_order_id?: string | null
+          eduzz_invoice_id?: string | null
           phone?: string | null
           role?: string
           updated_at?: string
