@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { PWAInstallPrompt } from './PWAInstallPrompt';
 import { Logo } from '../ui/Primitives';
 import { ShieldCheck, User, ChevronDown, Check, CircleUser, Compass, LogOut } from 'lucide-react';
-import { DEMO_ATIVA } from '../../data/demo';
+import { sairDaDemo } from '../../data/demo';
 
 interface AppHeaderProps {
   onNavigateToTab?: (tab: string) => void;
@@ -114,8 +114,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onNavigateToTab, onReplayT
                   </>
                 )}
 
-                {/* Troca de papel só na demonstração local: sem login e fora do build de produção (T-22) */}
-                {DEMO_ATIVA && !session && (
+                {/* Sem sessão = demonstração (gesto secreto, T-86): troca de papel e saída. Com login, o papel vem do banco (T-22) */}
+                {!session && (
                   <>
                     <p className="eyebrow px-3 pb-1.5 pt-2">Modo de demonstração</p>
                     {(
@@ -148,6 +148,17 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onNavigateToTab, onReplayT
                         </button>
                       );
                     })}
+                    <button
+                      role="menuitem"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        sairDaDemo();
+                      }}
+                      className="mt-1 flex w-full items-center gap-2.5 rounded-field px-3 py-2.5 text-[13px] font-semibold text-clay-600 hover:bg-clay-50"
+                    >
+                      <LogOut className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+                      Sair da demonstração
+                    </button>
                   </>
                 )}
 

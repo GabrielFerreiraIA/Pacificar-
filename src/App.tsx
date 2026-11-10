@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { Suspense, lazy, useEffect, useState } from 'react';
+import React, { Suspense, lazy, useCallback, useEffect, useState } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LoginPage, SetPasswordPage } from './pages/auth/AuthScreens';
@@ -17,7 +17,7 @@ import { OfflineBanner } from './components/layout/OfflineBanner';
 import { HomeDailyPage } from './pages/patient/HomeDailyPage';
 import { TourOverlay } from './components/onboarding/TourOverlay';
 import { ErrorBoundary } from './components/feedback/ErrorBoundary';
-import { DEMO_ATIVA } from './data/demo';
+import { carregarDemo, demoLembrada } from './data/demo';
 
 /* Code splitting (T-72): só a Home vai no pacote inicial; o resto carrega sob demanda.
    Os pedaços continuam no precache do service worker, então o app segue offline. */
@@ -208,16 +208,24 @@ const Splash: React.FC = () => (
 
 /**
  * Portão de acesso (T-21): sem sessão, só a tela de login.
- * Em desenvolvimento dá para abrir a demo com dados fictícios sem login.
+ * A demo (dados fictícios, sem login) abre pelo gesto secreto do logo (T-86).
  */
 const AuthGate: React.FC = () => {
   const { session, profile, loading, mustSetPassword } = useAuth();
   const [demo, setDemo] = useState(false);
+  const abrirDemo = useCallback(async () => {
+    await carregarDemo(); // baixa o chunk do mockData só agora
+    setDemo(true);
+  }, []);
+  // Recarregou a página com a demo aberta nesta aba: reabre
+  useEffect(() => {
+    if (demoLembrada()) void abrirDemo();
+  }, [abrirDemo]);
 
   if (mustSetPassword) return <SetPasswordPage />;
   if (loading) return <Splash />;
   if (!session && !demo) {
-    return <LoginPage onDemo={DEMO_ATIVA ? () => setDemo(true) : undefined} />;
+    return <LoginPage onDemo={() => void abrirDemo()} />;
   }
   // Reembolso/chargeback (T-23). O RLS já bloqueia a escrita; aqui é a tela acolhedora.
   if (session && profile?.access_status === 'revoked') return <SuspendedPage />;

@@ -1,4 +1,4 @@
-import React, { useId, useState } from 'react';
+import React, { useId, useRef, useState } from 'react';
 import { ArrowLeft, Eye, EyeOff, KeyRound, LogIn, MailCheck, Send } from 'lucide-react';
 import { Button, Field, Logo, inputClass } from '../../components/ui/Primitives';
 import { useAuth } from '../../context/AuthContext';
@@ -12,16 +12,34 @@ import { DEMO_ATIVA } from '../../data/demo';
 const MIN_SENHA = 8;
 const emailValido = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim());
 
-const AuthLayout: React.FC<{ eyebrow: string; title: string; lead?: string; children: React.ReactNode }> = ({
-  eyebrow,
-  title,
-  lead,
-  children
-}) => (
+/** Gesto secreto da demo (T-86): 5 toques no logo em menos de 3 segundos. */
+function useToquesSecretos(aoDisparar?: () => void) {
+  const toques = useRef<number[]>([]);
+  return () => {
+    if (!aoDisparar) return;
+    const agora = Date.now();
+    toques.current = [...toques.current.filter(t => agora - t < 3000), agora];
+    if (toques.current.length >= 5) {
+      toques.current = [];
+      aoDisparar();
+    }
+  };
+}
+
+const AuthLayout: React.FC<{
+  eyebrow: string;
+  title: string;
+  lead?: string;
+  onLogoTap?: () => void;
+  children: React.ReactNode;
+}> = ({ eyebrow, title, lead, onLogoTap, children }) => (
   <div className="grain flex min-h-dvh flex-col bg-canvas">
     <main className="relative z-10 mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-5 py-10">
       <div className="mb-8 flex items-center gap-3">
-        <Logo className="h-11 w-11 shrink-0" />
+        {/* Sem cara de botão de propósito: é o atalho escondido da demonstração */}
+        <div onClick={onLogoTap} className="shrink-0 select-none [-webkit-tap-highlight-color:transparent]">
+          <Logo className="h-11 w-11" />
+        </div>
         <div>
           <p className="font-display text-[19px] font-semibold leading-none tracking-tight text-ink">Pacificar</p>
           <p className="mt-1 text-[12px] leading-none text-ink-3">Ana Carla Nesi · CRP 17/2833</p>
@@ -121,6 +139,8 @@ export const LoginPage: React.FC<{ onDemo?: () => void }> = ({ onDemo }) => {
     else setModo('enviado');
   };
 
+  const tocarLogo = useToquesSecretos(onDemo);
+
   const trocarModo = (m: typeof modo) => {
     setErro(null);
     setModo(m);
@@ -152,6 +172,7 @@ export const LoginPage: React.FC<{ onDemo?: () => void }> = ({ onDemo }) => {
 
   return (
     <AuthLayout
+      onLogoTap={tocarLogo}
       eyebrow={esqueci ? 'Recuperar acesso' : 'Que bom ter você aqui'}
       title={esqueci ? 'Esqueci minha senha' : 'Entrar na sua jornada'}
       lead={
