@@ -73,7 +73,7 @@ Use quando houver reembolso, cancelamento combinado ou outro motivo para pausar.
 
 A paciente passa a ver uma tela acolhedora de **acesso pausado**, com um botão para falar com você no WhatsApp. **Nada é apagado**: para devolver o acesso, toque em **Reativar acesso**.
 
-> Quando a integração com a Kiwify estiver ativa, reembolsos e chargebacks suspendem o acesso sozinhos, e uma nova compra reativa.
+> Quando a integração com a Eduzz estiver ativa, reembolsos e chargebacks suspendem o acesso sozinhos, e uma nova compra reativa.
 
 ---
 

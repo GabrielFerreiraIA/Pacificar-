@@ -2,7 +2,7 @@
 
 PWA da terapeuta **Ana Carla Nesi**: jornada de 21 dias com anamnese, check-in diário, nutrição e protocolos.
 
-**Stack:** Vite + React 19 + TypeScript + Tailwind 4 + vite-plugin-pwa · Supabase (Postgres, Auth, Storage) · Vercel (front + funções em `api/`) · venda pela Kiwify.
+**Stack:** Vite + React 19 + TypeScript + Tailwind 4 + vite-plugin-pwa · Supabase (Postgres, Auth, Storage) · Vercel (front + funções em `api/`) · venda pela Eduzz (go-live em `finalizacao/GO-LIVE-EDUZZ.md`).
 
 ## Rodar localmente
 

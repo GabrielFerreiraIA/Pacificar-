@@ -7,7 +7,7 @@
 
 Levar o protótipo atual (100% `localStorage`, sem login) a um produto vendável:
 
-1. O paciente compra na **Kiwify** → recebe e-mail → define senha → entra no app.
+1. O paciente compra na **Eduzz** → recebe e-mail → define senha → entra no app.
 2. Todos os dados (anamnese, check-ins, exames) ficam no **Supabase**, e a Ana vê tudo no painel.
 3. O app roda na **Vercel** (front + funções serverless), com custo zero enquanto couber nos planos gratuitos.
 4. O Supabase gratuito **nunca pausa** por inatividade.
@@ -27,7 +27,7 @@ Levar o protótipo atual (100% `localStorage`, sem login) a um produto vendável
 ## Arquitetura alvo
 
 ```
- Kiwify ──webhook──▶ Vercel /api/kiwify-webhook ──service role──▶ Supabase Auth (convite por e-mail)
+ Eduzz ───webhook──▶ Vercel /api/eduzz-webhook ──service role──▶ Supabase Auth (convite por e-mail)
                                                               └──▶ tabela purchases + profiles
  Paciente (PWA) ──anon key + sessão──▶ Supabase (Postgres com RLS, Storage "exames")
  Vercel Cron (1x/dia) ─┐
@@ -46,7 +46,7 @@ Levar o protótipo atual (100% `localStorage`, sem login) a um produto vendável
 |---|---|---|
 | D1 | Login por **convite** (`auth.admin.inviteUserByEmail`) disparado pelo webhook | A pessoa define a própria senha, e não trafega senha por e-mail |
 | D2 | Reembolso/chargeback **suspende** o acesso (`profiles.access_status = 'revoked'`), não apaga | Preserva o histórico clínico e permite reativar |
-| D3 | Idempotência do webhook pela chave única `purchases (order_id, event)` | A Kiwify reenvia eventos. Aprovação e reembolso chegam com o mesmo `order_id`, então a unicidade só por pedido descartaria o reembolso. |
+| D3 | Idempotência do webhook pela chave única `purchases (order_id, event)` | A plataforma de venda reenvia eventos. Aprovação e reembolso chegam com o mesmo `order_id`, então a unicidade só por pedido descartaria o reembolso. |
 | D4 | Keep-alive com **duas fontes**: Vercel Cron diário + GitHub Actions a cada 12h | A Vercel Hobby só permite cron 1x/dia, com horário impreciso. A redundância garante margem folgada dentro da janela de 7 dias. |
 | D5 | O keep-alive faz **escrita e leitura reais** no Postgres, não só um ping HTTP | O Supabase mede "atividade de banco". Um ping sem query pode não contar. |
 | D6 | Áudios em `public/audio/` (mp3 mono 64 kbps), **não** no Supabase Storage | O plano gratuito do Supabase tem 5 GB/mês de egress. 100 pacientes × 21 áudios estouram isso. A Vercel tem 100 GB. |
@@ -55,6 +55,8 @@ Levar o protótipo atual (100% `localStorage`, sem login) a um produto vendável
 | D9 | SMTP próprio (Resend, grátis até 3 mil e-mails/mês) no Supabase Auth | O SMTP padrão do Supabase só envia para membros da equipe e tem limite mínimo. Sem isso, o convite de compra não chega. |
 | D10 | Migrations aplicadas pela API de gestão do Supabase; o arquivo local usa a versão (timestamp) que o servidor gravou | Mantém `supabase/migrations/` e o histórico remoto iguais, para a CLI não reaplicar nada |
 | D11 | Exames: 10 MB por arquivo, cota de 20 arquivos por paciente (policy no Storage) e fotos comprimidas no aparelho antes do envio (T-50) | O Storage gratuito tem 1 GB no total. Foto de celular cai de ~3 MB para ~300 KB. PDF escaneado de laboratório precisa da folga de 10 MB. |
+| D13 | Venda pela **Eduzz** (não mais Kiwify). Webhook `api/eduzz-webhook.ts`, coluna `profiles.eduzz_invoice_id` | Decisão comercial de 09/11/2026. A Eduzz documenta o payload e a assinatura (`x-signature`, HMAC-SHA256), o que dispensa a captura prévia que a Kiwify exigia. |
+| D14 | Modo demo **sem botão**: 5 toques no logo da tela de login. O `mockData` vira um chunk separado, baixado só ao abrir a demo | A Ana continua apresentando o app em produção sem expor dados fictícios a quem compra. Substitui a variável `VITE_DEMO` (T-85), que segue só como atalho visível em preview. |
 | D12 | Supabase Auth: **cadastro público desligado**, senha mínima de 8, link de convite/recuperação válido por 24h. Ao sair, o app apaga o cache local | Acesso só por compra (D1): com o cadastro aberto, qualquer um com a chave pública criaria conta. Quem compra nem sempre abre o e-mail na primeira hora. Celular pode ser compartilhado (LGPD). |
 
 ## Riscos que o Gabriel precisa conhecer
@@ -62,7 +64,7 @@ Levar o protótipo atual (100% `localStorage`, sem login) a um produto vendável
 1. **Vercel Hobby é só para uso não comercial.** O app é vendido, então tecnicamente viola os termos. Tudo neste plano roda igual no Pro (US$ 20/mês), e a troca é só de plano, sem mudar código. Decidir até o go-live (tarefa T-81).
 2. **Supabase gratuito não tem backup baixável.** Para dado de saúde, um dump manual mensal é o mínimo (T-82).
 3. **Limites do Supabase gratuito:** 500 MB de banco, 1 GB de storage (exames em PDF/foto), 50 mil usuários ativos por mês. Folgado para o começo. Monitorar o storage.
-4. **A Kiwify não documenta o payload nem a assinatura do webhook.** O formato precisa ser capturado de um evento real (T-30) antes de implementar (T-31). Referências da comunidade indicam `?signature=` com HMAC-SHA1 do corpo usando o token do webhook. **Confirmar com o evento real.**
+4. **A Eduzz não diz se a assinatura vem em hex ou base64.** O webhook aceita as duas e informa qual bateu na resposta do ping (`"assinatura": "hex"`). Se vier `"invalida"`, a chave cadastrada na Vercel não é a mesma do Console da Eduzz (T-36).
 5. **Áudios dependem da Ana gravar.** É o caminho crítico de prazo: pedir já.
 
 ## Keep-alive em detalhe (Fase 4)
@@ -89,15 +91,23 @@ alter table public.heartbeat enable row level security; -- sem policies: só a s
 
 **Critério de aceite:** a tabela `heartbeat` mostra linhas das duas fontes por 7 dias seguidos, sem nenhum acesso humano ao projeto.
 
-## Fluxo Kiwify em detalhe (Fase 3)
+## Fluxo Eduzz em detalhe (Fase 3)
 
-| Evento Kiwify | Ação |
+Referência oficial: https://developers.eduzz.com/docs/webhook e https://developers.eduzz.com/reference/webhook/myeduzz-invoice-paid
+
+Envelope: `{ id, event, data, sentDate }`. Header `x-signature` = HMAC-SHA256 do corpo com a chave secreta do webhook (`EDUZZ_WEBHOOK_SECRET`).
+
+| Evento Eduzz | Ação |
 |---|---|
-| `compra_aprovada` | Se o e-mail não existe no Auth → `inviteUserByEmail` com `redirectTo = APP_URL/definir-senha`. Se já existe → reativa (`access_status = 'active'`). Cria/atualiza `profiles` (nome, telefone, `kiwify_order_id`, `journey_start_date = hoje`). |
-| `compra_reembolsada`, `chargeback` | `access_status = 'revoked'`. |
-| demais | Só registra em `purchases`. |
+| `ping` | Responde 200 sempre (senão a URL não ativa) e devolve `assinatura` = `hex`, `base64` ou `invalida`. |
+| `myeduzz.invoice_paid` | E-mail de `data.student` (quem recebe o acesso) ou de `data.buyer`. Sem conta → `inviteUserByEmail` com `redirectTo = APP_URL/definir-senha`. Com conta → reativa. Grava nome, celular, `eduzz_invoice_id = data.id` e `journey_start_date = hoje` (se ainda vazio). |
+| `myeduzz.invoice_refunded` | `access_status = 'revoked'`. |
+| `myeduzz.invoice_chargeback` | Suspende; se `data.chargeback.status = 'rejected'` (contestação recusada), reativa. A chave de idempotência inclui o status. |
+| `myeduzz.invoice_canceled` e demais | Só registra em `purchases`. |
 
-Toda chamada é registrada em `purchases` (`(order_id, event)` único, `event`, `email`, `payload jsonb`, `processed_at`, `error`). Responder **200 rapidamente** mesmo em evento ignorado. Responder 401 em assinatura inválida.
+`EDUZZ_PRODUCT_IDS` (opcional) restringe a liberação aos produtos do app, para outras vendas da Ana na mesma conta não criarem login.
+Em `purchases.payload` vai só um resumo (id, status, produtos, valor): **sem CPF nem endereço** (LGPD).
+Respostas: 401 assinatura inválida, 200 processado/duplicado/ignorado, 500 falha (a Eduzz pode reenviar com segurança).
 
 ## Trilhas de trabalho paralelo
 
@@ -105,7 +115,7 @@ Depois da Fase 0, dá para rodar sessões em paralelo **desde que cada uma fique
 
 | Trilha | Tarefas | Arquivos principais |
 |---|---|---|
-| **A — Backend** | Fases 1, 2, 3 | `supabase/`, `api/kiwify-*`, `src/lib/`, `src/context/`, telas de login |
+| **A — Backend** | Fases 1, 2, 3 | `supabase/`, `api/eduzz-*`, `src/lib/`, `src/context/`, telas de login |
 | **B — Infra** | Fase 4, T-80 | `api/keepalive.ts`, `vercel.json`, `.github/` |
 | **C — Front/conteúdo** | T-52, T-53, T-55, Fase 7 | `src/pages/`, `src/components/`, `src/data/`, `public/` |
 
@@ -118,6 +128,7 @@ T-14 (migrar o AppContext) toca em quase tudo: rode **sozinha**, sem outra sess�
 | `VITE_SUPABASE_URL` | Vercel + `.env.local` | cliente |
 | `VITE_SUPABASE_ANON_KEY` | Vercel + `.env.local` | cliente |
 | `SUPABASE_SERVICE_ROLE_KEY` | **só Vercel** (nunca `VITE_`) | funções `api/` |
-| `KIWIFY_WEBHOOK_TOKEN` | só Vercel | validar assinatura |
+| `EDUZZ_WEBHOOK_SECRET` | só Vercel | validar `x-signature` do webhook |
+| `EDUZZ_PRODUCT_IDS` | só Vercel (opcional) | ids dos produtos que liberam o app |
 | `CRON_SECRET` | Vercel + GitHub Secrets | keep-alive |
 | `APP_URL` | Vercel + GitHub Secrets | redirects e keep-alive |
