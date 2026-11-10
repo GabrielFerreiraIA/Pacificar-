@@ -88,6 +88,8 @@ Use os comandos em vez de editar à mão:  npm run tarefa -- iniciar|concluir|bl
   - O agente escreve `.github/workflows/keepalive.yml`. O Gabriel cadastra os secrets `CRON_SECRET` e `APP_URL` no GitHub.
 - [ ] **T-43** Validar 7 dias seguidos de heartbeat sem acesso humano · @gabriel · dep: T-41, T-42
   - Aceite: `select source, date(created_at), count(*) from heartbeat group by 1,2` mostra as duas fontes em todos os dias.
+- [~] **T-44** Keep-alive interno no Supabase (pg_cron + pg_net) · @agente · dep: T-11 · em andamento: claude (2026-11-09)
+  - Cron a cada 6h dentro do banco: grava em `heartbeat` (fonte `supabase-cron`) e faz uma chamada HTTP real à API REST do próprio projeto. Terceira camada, não substitui T-41/T-42.
 
 ## Fase 5 · Funcionalidades e conteúdo
 
