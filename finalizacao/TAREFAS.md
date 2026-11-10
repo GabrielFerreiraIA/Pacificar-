@@ -56,7 +56,9 @@ Use os comandos em vez de editar à mão:  npm run tarefa -- iniciar|concluir|bl
 - [x] **T-23** Tela de acesso suspenso (reembolso/chargeback) · @agente · dep: T-22 · concluída: claude (2026-09-24)
   - Quando `access_status = 'revoked'`, mostra mensagem acolhedora e o contato da Ana.
 
-## Fase 3 · Kiwify (compra cria o login)
+## Fase 3 · Compra cria o login
+
+> A venda passou da Kiwify para a **Eduzz** (D13). T-30 a T-33 ficam como histórico; o caminho atual é T-34 a T-37.
 
 - [ ] **T-30** Capturar um payload real do webhook da Kiwify · @gabriel @agente · dep: —
   - Criar um webhook na Kiwify apontando para `webhook.site` e disparar o evento de teste de `compra_aprovada` e de `compra_reembolsada`.
@@ -68,6 +70,14 @@ Use os comandos em vez de editar à mão:  npm run tarefa -- iniciar|concluir|bl
   - URL `APP_URL/api/kiwify-webhook`, eventos: compra aprovada, reembolsada e chargeback. Token copiado para `KIWIFY_WEBHOOK_TOKEN` na Vercel.
 - [ ] **T-33** Teste de ponta a ponta de compra · @gabriel · dep: T-32, T-22
   - Compra real com cupom de 100% → e-mail chega → define senha → entra → reembolso → acesso suspenso.
+- [~] **T-34** Webhook da Eduzz `api/eduzz-webhook.ts` (substitui a Kiwify) · @agente · dep: T-12 · em andamento: claude (2026-11-09)
+  - Assinatura `x-signature` (HMAC-SHA256 do corpo), eventos `myeduzz.invoice_paid`, `_refunded`, `_chargeback`, `_canceled`. Idempotente por `(order_id, event)`. Testes locais com payload fictício.
+- [ ] **T-35** Cadastrar o produto e o webhook na Eduzz · @gabriel · dep: T-34, T-04
+  - Passo a passo em `finalizacao/GO-LIVE-EDUZZ.md`. Chave secreta em `EDUZZ_WEBHOOK_SECRET` na Vercel.
+- [ ] **T-36** Capturar um evento real da Eduzz e confirmar a assinatura · @gabriel @agente · dep: T-35
+  - Primeira venda de teste: conferir no histórico de envios da Eduzz a resposta `200` e `assinatura: hex|base64`. Salvar o payload anonimizado em `finalizacao/refs/eduzz-invoice_paid.json`.
+- [ ] **T-37** Teste de ponta a ponta de compra na Eduzz · @gabriel · dep: T-35, T-20
+  - Compra com cupom de 100% → e-mail chega → define senha → entra → reembolso → acesso suspenso.
 
 ## Fase 4 · Keep-alive (Supabase gratuito não pausa)
 
@@ -132,3 +142,5 @@ Use os comandos em vez de editar à mão:  npm run tarefa -- iniciar|concluir|bl
 - [ ] **T-84** Primeira venda real acompanhada e 7 dias de monitoramento · @gabriel @ana · dep: T-33, T-43, T-60, T-74
 - [x] **T-85** Modo demo para a Ana na Vercel (VITE_DEMO) e subida no GitHub · @agente · dep: — · concluída: claude (2026-10-01)
   - `VITE_DEMO=true` liga a demonstração (dados fictícios, salva no navegador) no build de produção. Sem a variável, o `mockData` sai do bundle. Ao tirar o botão: apagar `VITE_DEMO` na Vercel e redeploy.
+- [~] **T-86** Modo demo escondido (gesto secreto) em vez do botão · @agente · dep: T-85 · em andamento: claude (2026-11-09)
+  - Sem botão na tela de login. Cinco toques no logo abrem a demo. Os dados fictícios ficam num chunk separado, baixado só quando a demo é aberta.
