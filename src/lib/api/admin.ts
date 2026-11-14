@@ -74,6 +74,11 @@ export async function setAccessStatus(userId: string, status: 'active' | 'revoke
   ok(await db().from('profiles').update({ access_status: status }).eq('id', userId));
 }
 
+/** Plano da jornada (T-87): a terapeuta pode liberar os 21 dias à mão (venda fora da Eduzz, cortesia). */
+export async function setPatientPlan(userId: string, planDays: 7 | 21) {
+  ok(await db().from('profiles').update({ plan_days: planDays }).eq('id', userId));
+}
+
 /** Peso informado pela terapeuta (define a dose da ivermectina). */
 export async function setPatientWeight(userId: string, weight: number | null) {
   ok(await db().from('profiles').update({ weight }).eq('id', userId));

@@ -33,6 +33,7 @@ import {
   listPatients,
   markExamReviewed,
   setAccessStatus,
+  setPatientPlan,
   setPatientWeight,
   type PatientDetail,
   type PatientSummary
@@ -199,6 +200,17 @@ function usePainel() {
       }
     },
 
+    async mudarPlano(id: string, dias: 7 | 21) {
+      if (!real) return;
+      try {
+        await setPatientPlan(id, dias);
+        const s = lista?.find(x => x.profile.id === id);
+        if (s) atualizarResumo(id, { profile: { ...s.profile, plan_days: dias } });
+      } catch {
+        setErro(MSG_ERRO);
+      }
+    },
+
     async mudarAcesso(id: string, status: 'active' | 'revoked') {
       if (!real) return;
       try {
@@ -339,12 +351,17 @@ export const AdminDashboardPage: React.FC = () => {
                         )}
                       </span>
                       <span className="tnum mt-1 block text-[12.5px] text-ink-3">
-                        Dia {p.current_day} de 21 · {p.weight != null ? `${p.weight} kg` : 'peso não informado'}
+                        Dia {Math.min(p.current_day, p.plan_days ?? 21)} de {p.plan_days ?? 21} · {p.weight != null ? `${p.weight} kg` : 'peso não informado'}
                       </span>
                       <span className="mt-1.5 flex flex-wrap items-center gap-1.5">
                         {s.deletionRequest && (
                           <span className="inline-flex items-center gap-1 rounded-full border border-clay-100 bg-clay-50 px-2 py-0.5 text-[10.5px] font-semibold text-clay-600">
                             Pediu exclusão
+                          </span>
+                        )}
+                        {p.plan_days === 7 && (
+                          <span className="inline-flex items-center gap-1 rounded-full border border-ochre-100 bg-ochre-50 px-2 py-0.5 text-[10.5px] font-semibold text-ochre-700">
+                            Plano 7 dias
                           </span>
                         )}
                         {suspensa && (
@@ -368,7 +385,7 @@ export const AdminDashboardPage: React.FC = () => {
                       </span>
                       <span className="mt-2 block">
                         <Progress
-                          value={(p.current_day / 21) * 100}
+                          value={(Math.min(p.current_day, p.plan_days ?? 21) / (p.plan_days ?? 21)) * 100}
                           label={`Progresso de ${nomeDe(s)}`}
                           tone={risk ? 'ochre' : 'leaf'}
                         />
@@ -457,6 +474,7 @@ export const AdminDashboardPage: React.FC = () => {
                   onSalvar={p => painel.salvarPrescricao(ativo.profile.id, p)}
                   onPeso={peso => painel.salvarPeso(ativo.profile.id, peso)}
                   onAcesso={status => void painel.mudarAcesso(ativo.profile.id, status)}
+                  onPlano={dias => void painel.mudarPlano(ativo.profile.id, dias)}
                 />
               )}
             </>
@@ -671,7 +689,8 @@ const PainelPrescricao: React.FC<{
   onSalvar: (p: Partial<Prescription>) => Promise<boolean>;
   onPeso: (peso: number | null) => Promise<boolean>;
   onAcesso: (status: 'active' | 'revoked') => void;
-}> = ({ ativo, prescricao, real, onSalvar, onPeso, onAcesso }) => {
+  onPlano: (dias: 7 | 21) => void;
+}> = ({ ativo, prescricao, real, onSalvar, onPeso, onAcesso, onPlano }) => {
   const [dosha, setDosha] = useState<string>(prescricao?.dosha_predominant ?? 'Vata-Pitta');
   const [massala, setMassala] = useState<string>(prescricao?.massala_recommended ?? 'Massala Vata');
   const [carrierOil, setCarrierOil] = useState(prescricao?.carrier_oil || 'Óleo de gergelim morno');
@@ -700,6 +719,14 @@ const PainelPrescricao: React.FC<{
       setSalvo(true);
       window.setTimeout(() => setSalvo(false), 4000);
     }
+  };
+
+  const planoCurto = ativo.profile.plan_days === 7;
+  const alternarPlano = () => {
+    const msg = planoCurto
+      ? `Liberar a jornada completa de 21 dias para ${nomeDe(ativo)}? Use quando o pagamento do upgrade foi feito fora da Eduzz.`
+      : `Voltar ${nomeDe(ativo)} para o plano de 7 dias? Os dias 8 a 21 ficam bloqueados de novo, mas nada é apagado.`;
+    if (window.confirm(msg)) onPlano(planoCurto ? 21 : 7);
   };
 
   const alternarAcesso = () => {
@@ -786,6 +813,22 @@ const PainelPrescricao: React.FC<{
           </p>
         )}
       </Card>
+
+      {real && (
+        <Card className="flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[14px] font-semibold text-ink">Plano: jornada de {planoCurto ? 7 : 21} dias</p>
+            <p className="mt-0.5 text-[12.5px] leading-relaxed text-ink-3">
+              {planoCurto
+                ? 'Os dias 8 a 21 aparecem com cadeado e a oferta de upgrade. A compra do upgrade na Eduzz libera sozinha.'
+                : 'Jornada completa liberada.'}
+            </p>
+          </div>
+          <Button variant="secondary" onClick={alternarPlano}>
+            {planoCurto ? 'Liberar 21 dias' : 'Voltar para 7 dias'}
+          </Button>
+        </Card>
+      )}
 
       {real && (
         <Card className="flex flex-wrap items-center justify-between gap-3">

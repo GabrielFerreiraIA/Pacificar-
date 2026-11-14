@@ -1,5 +1,6 @@
 import React from 'react';
 import { Wheat, Milk, Candy, Wine } from 'lucide-react';
+import { useApp } from '../../context/AppContext';
 
 interface RestrictionBannerProps {
   compact?: boolean;
@@ -14,6 +15,7 @@ const RESTRICTIONS = [
 ];
 
 export const RestrictionBanner: React.FC<RestrictionBannerProps> = ({ compact = false }) => {
+  const { planDays } = useApp();
   if (compact) {
     return (
       <ul className="no-scrollbar flex gap-2 overflow-x-auto py-0.5">
@@ -38,7 +40,7 @@ export const RestrictionBanner: React.FC<RestrictionBannerProps> = ({ compact = 
             O que sai do prato
           </h3>
         </div>
-        <span className="tnum shrink-0 text-[12px] font-semibold text-ink-3">21 dias</span>
+        <span className="tnum shrink-0 text-[12px] font-semibold text-ink-3">{planDays} dias</span>
       </div>
 
       <ul className="grid grid-cols-2 gap-2">

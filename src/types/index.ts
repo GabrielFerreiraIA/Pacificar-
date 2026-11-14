@@ -11,6 +11,8 @@ export interface UserProfile {
   phone?: string;
   journey_start_date: string; // YYYY-MM-DD
   current_day: number; // 1-21
+  /** Jornada comprada: 7 ou 21 dias (T-87). Ausente = 21. */
+  plan_days?: 7 | 21;
   avatar_url?: string;
   created_at: string;
 }

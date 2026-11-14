@@ -17,6 +17,7 @@ export function toUserProfile(r: Row): UserProfile {
     phone: r.phone ?? undefined,
     journey_start_date: r.journey_start_date ?? dataSaoPaulo(new Date(r.created_at)),
     current_day: r.current_day,
+    plan_days: r.plan_days === 7 ? 7 : 21,
     avatar_url: r.avatar_url ?? undefined,
     created_at: r.created_at
   };

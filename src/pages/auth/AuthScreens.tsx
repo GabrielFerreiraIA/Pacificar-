@@ -54,7 +54,7 @@ const AuthLayout: React.FC<{
       </section>
 
       <p className="mt-6 px-2 text-center text-[12px] leading-relaxed text-ink-3">
-        Jornada de 21 dias de desinflamação e saúde integrativa.
+        Jornada de desinflamação e saúde integrativa, em 7 ou 21 dias.
       </p>
     </main>
   </div>

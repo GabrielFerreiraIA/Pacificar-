@@ -8,6 +8,7 @@ import {
   ParasiteCycle
 } from '../types';
 import { DEMO } from '../data/demo';
+import { diasDoPlano } from '../config/plano';
 import { getProfile } from '../lib/api/profile';
 import { getAnamnese, type AnamneseRecord } from '../lib/api/anamnese';
 import { listCheckins } from '../lib/api/checkins';
@@ -49,6 +50,14 @@ interface AppContextType {
   userId: string | null;
   /** Registros feitos sem internet, aguardando envio (T-73) */
   pendingSync: number;
+  /** Jornada comprada: 7 ou 21 dias (T-87). Terapeuta: 21. */
+  planDays: 7 | 21;
+  /** Último dia aberto para a pessoa: o dia atual, limitado ao plano. */
+  unlockedUntil: number;
+  /** Busca o perfil de novo (ex.: voltou do checkout do upgrade). true se o plano mudou. */
+  refreshProfile: () => Promise<boolean>;
+  /** Só na demonstração: alterna entre os planos de 7 e 21 dias para ver a oferta de upgrade. */
+  simularPlano: (dias: 7 | 21) => void;
 
   // Actions
   login: (email: string, role?: UserRole, name?: string) => void;
@@ -313,7 +322,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, authRole, au
         setPreparoChecked(prep);
         setParasiteCycles(cycles);
         if (profile && localStorage.getItem(STORAGE_KEYS.DAY) === null) {
-          setSelectedDayState(Math.min(Math.max(profile.current_day, 1), 21));
+          setSelectedDayState(Math.min(Math.max(profile.current_day, 1), diasDoPlano(profile)));
         }
         setSyncError(null);
       } catch (e) {
@@ -329,6 +338,51 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, authRole, au
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDemo, uid, reloadKey]);
+
+  /* ── Plano (T-87): 7 ou 21 dias ────────────────────────────── */
+  const planDays = diasDoPlano(currentUser, isDemo ? currentUser?.role : authRole);
+  const unlockedUntil = Math.min(Math.max(currentUser?.current_day ?? 1, 1), planDays);
+
+  const refreshProfile = useCallback(async () => {
+    if (isDemo) return false;
+    try {
+      const p = await getProfile(uid);
+      if (!p) return false;
+      let mudou = false;
+      setCurrentUser(prev => {
+        mudou = diasDoPlano(prev) !== diasDoPlano(p);
+        return prev ? { ...prev, plan_days: p.plan_days, current_day: Math.max(prev.current_day, p.current_day) } : p;
+      });
+      return mudou;
+    } catch {
+      return false; // sem internet: tenta de novo na próxima volta ao app
+    }
+  }, [isDemo, uid]);
+
+  // Quem tem 7 dias pode ter ido pagar o upgrade: ao voltar para o app, confere o plano
+  useEffect(() => {
+    if (isDemo || planDays !== 7) return;
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void refreshProfile();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onVisible);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onVisible);
+    };
+  }, [isDemo, planDays, refreshProfile]);
+
+  // Dia escolhido fora do plano (cache antigo, plano estornado): volta para o último dia do plano
+  useEffect(() => {
+    if (selectedDay > planDays) setSelectedDayState(planDays);
+  }, [selectedDay, planDays]);
+
+  const simularPlano = (dias: 7 | 21) => {
+    if (!isDemo) return;
+    setCurrentUser(prev => (prev ? { ...prev, plan_days: dias } : prev));
+    if (dias === 7 && selectedDay > 7) setSelectedDayState(7);
+  };
 
   /* ── Cache local ───────────────────────────────────────────── */
   useEffect(() => {
@@ -427,7 +481,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, authRole, au
 
   /* ── Demais ações ──────────────────────────────────────────── */
   const setSelectedDay = (day: number) => {
-    if (day >= 1 && day <= 21) {
+    if (day >= 1 && day <= planDays) {
       setSelectedDayState(day);
     }
   };
@@ -607,6 +661,10 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, authRole, au
         syncError,
         userId: isDemo ? null : uid,
         pendingSync,
+        planDays,
+        unlockedUntil,
+        refreshProfile,
+        simularPlano,
         login,
         logout,
         switchRole,

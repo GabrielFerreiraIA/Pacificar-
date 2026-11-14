@@ -3,7 +3,7 @@ import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { PWAInstallPrompt } from './PWAInstallPrompt';
 import { Logo } from '../ui/Primitives';
-import { ShieldCheck, User, ChevronDown, Check, CircleUser, Compass, LogOut } from 'lucide-react';
+import { ShieldCheck, User, ChevronDown, Check, CircleUser, Compass, LogOut, Sparkles } from 'lucide-react';
 import { sairDaDemo } from '../../data/demo';
 
 interface AppHeaderProps {
@@ -13,7 +13,7 @@ interface AppHeaderProps {
 }
 
 export const AppHeader: React.FC<AppHeaderProps> = ({ onNavigateToTab, onReplayTour }) => {
-  const { role, switchRole } = useApp();
+  const { role, switchRole, planDays, simularPlano } = useApp();
   const { session, signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -148,6 +148,27 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onNavigateToTab, onReplayT
                         </button>
                       );
                     })}
+                    {/* Ver a oferta de upgrade como quem comprou 7 dias (T-87) */}
+                    {role === 'patient' && (
+                      <button
+                        role="menuitemcheckbox"
+                        aria-checked={planDays === 7}
+                        onClick={() => {
+                          simularPlano(planDays === 7 ? 21 : 7);
+                          setMenuOpen(false);
+                          onNavigateToTab?.('hoje');
+                        }}
+                        className={`flex w-full items-center justify-between gap-2 rounded-field px-3 py-2.5 text-[13px] font-semibold ${
+                          planDays === 7 ? 'bg-ochre-50 text-ochre-700' : 'text-ink-2 hover:bg-canvas'
+                        }`}
+                      >
+                        <span className="flex items-center gap-2.5">
+                          <Sparkles className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+                          Simular plano de 7 dias
+                        </span>
+                        {planDays === 7 && <Check className="h-4 w-4 text-ochre-600" aria-hidden="true" />}
+                      </button>
+                    )}
                     <button
                       role="menuitem"
                       onClick={() => {

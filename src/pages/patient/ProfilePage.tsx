@@ -1,6 +1,7 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { MeusDadosSection } from './MeusDadosSection';
+import { UpgradeCard } from '../../components/cards/UpgradeOffer';
 import { Button, Card, EmptyState, Pill, SectionTitle } from '../../components/ui/Primitives';
 import {
   ClipboardList,
@@ -29,7 +30,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
   onOpenExams,
   onOpenReport
 }) => {
-  const { currentUser, prescription, anamnese, labExams, checkins, resetToDefaultData, userId } =
+  const { currentUser, prescription, anamnese, labExams, checkins, resetToDefaultData, userId, planDays, unlockedUntil } =
     useApp();
 
   const initials = (currentUser?.full_name ?? 'P')
@@ -39,7 +40,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
     .join('')
     .toUpperCase();
 
-  const unlockedWeeks = [1, 2, 3].filter(w => checkins.length >= w * 7);
+  const unlockedWeeks = [1, 2, 3].filter(w => w * 7 <= planDays && checkins.length >= w * 7);
 
   return (
     <div className="space-y-7 pb-8">
@@ -57,7 +58,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
       {/* ── Números da jornada ────────────────────────────────── */}
       <div className="grid grid-cols-3 gap-2">
         {[
-          { value: currentUser?.current_day ?? 1, label: 'Dia atual' },
+          { value: `${unlockedUntil}/${planDays}`, label: 'Dia atual' },
           { value: checkins.length, label: 'Check-ins' },
           { value: `${currentUser?.weight ?? '—'} kg`, label: 'Peso' }
         ].map(stat => (
@@ -67,6 +68,9 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
           </Card>
         ))}
       </div>
+
+      {/* ── Plano de 7 dias: caminho para os 21 (T-87) ───────── */}
+      <UpgradeCard variante="compacto" />
 
       {/* ── Admissão ──────────────────────────────────────────── */}
       <section className="space-y-3">
@@ -131,7 +135,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
         <SectionTitle
           eyebrow="Evolução"
           title="Relatórios semanais"
-          hint="Liberados nos dias 7, 14 e 21."
+          hint={planDays < 21 ? 'Liberado no dia 7.' : 'Liberados nos dias 7, 14 e 21.'}
         />
 
         {unlockedWeeks.length === 0 ? (

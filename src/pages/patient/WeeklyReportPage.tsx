@@ -91,7 +91,7 @@ interface WeeklyReportPageProps {
 }
 
 export const WeeklyReportPage: React.FC<WeeklyReportPageProps> = ({ initialWeek = 1, onBack }) => {
-  const { checkins, currentUser } = useApp();
+  const { checkins, currentUser, planDays } = useApp();
   const [week, setWeek] = useState(initialWeek);
   const [showTable, setShowTable] = useState(false);
 
@@ -160,8 +160,9 @@ export const WeeklyReportPage: React.FC<WeeklyReportPageProps> = ({ initialWeek 
         )}
       </header>
 
-      <div role="tablist" aria-label="Selecionar semana" className="grid grid-cols-3 gap-1.5">
-        {[1, 2, 3].map(w => (
+      <div role="tablist" aria-label="Selecionar semana" className={`grid gap-1.5 ${planDays < 21 ? 'grid-cols-1' : 'grid-cols-3'}`}>
+        {/* Plano de 7 dias (T-87): só a semana 1 */}
+        {[1, 2, 3].filter(w => w * 7 <= planDays).map(w => (
           <button
             key={w}
             role="tab"

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { BristolSelector } from '../../components/bristol/BristolSelector';
 import { Button, Card, Pill, inputClass } from '../../components/ui/Primitives';
+import { UpgradeCard } from '../../components/cards/UpgradeOffer';
 import confetti from 'canvas-confetti';
 import {
   ArrowLeft,
@@ -163,7 +164,7 @@ export const CheckinNightlyPage: React.FC<CheckinNightlyPageProps> = ({
   onClose,
   onOpenReport
 }) => {
-  const { checkins, saveDailyCheckin } = useApp();
+  const { checkins, saveDailyCheckin, planDays } = useApp();
   const existing = checkins.find(c => c.day_number === dayNumber);
 
   const [energy, setEnergy] = useState(existing?.energy_rating ?? 4);
@@ -257,6 +258,9 @@ export const CheckinNightlyPage: React.FC<CheckinNightlyPageProps> = ({
           </Card>
         )}
 
+        {/* Fim do plano de 7 dias (T-87): a oferta aparece logo depois do parabéns */}
+        {dayNumber === planDays && planDays < 21 && <UpgradeCard variante="concluido" />}
+
         <Button full size="lg" variant={isMilestone ? 'secondary' : 'primary'} onClick={onClose}>
           Voltar para a jornada
         </Button>
@@ -276,7 +280,7 @@ export const CheckinNightlyPage: React.FC<CheckinNightlyPageProps> = ({
           Voltar
         </button>
         <Pill tone="leaf">
-          Dia <span className="tnum mx-0.5 font-bold">{dayNumber}</span> de 21
+          Dia <span className="tnum mx-0.5 font-bold">{dayNumber}</span> de {planDays}
         </Pill>
       </div>
 

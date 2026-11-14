@@ -9,6 +9,7 @@ import { AUDIO_ENABLED } from '../../config/features';
 import { MEAL_OPTIONS } from '../../data/mealOptions';
 import { SelfCareCard } from '../../components/cards/SelfCareCard';
 import { RestrictionBanner } from '../../components/cards/RestrictionBanner';
+import { UpgradeCard, UpgradeDialog } from '../../components/cards/UpgradeOffer';
 import { Button, Card, Pill, SectionTitle } from '../../components/ui/Primitives';
 import {
   Check,
@@ -35,16 +36,20 @@ export const HomeDailyPage: React.FC<HomeDailyPageProps> = ({
   onOpenNutrition,
   onOpenRecipe
 }) => {
-  const { currentUser, selectedDay, setSelectedDay, checkins } = useApp();
+  const { currentUser, selectedDay, setSelectedDay, checkins, planDays, unlockedUntil } = useApp();
 
-  // BR-001: o conteúdo de um dia só abre quando a data chega
-  const unlockedUntil = currentUser?.current_day ?? 1;
+  // BR-001: o conteúdo de um dia só abre quando a data chega (e dentro do plano comprado, T-87)
   const isLocked = (dayNumber: number) => dayNumber > unlockedUntil;
 
   const day = JOURNEY_DAYS.find(d => d.day_number === selectedDay) ?? JOURNEY_DAYS[0];
   const locked = isLocked(selectedDay);
   const checkinDone = checkins.some(c => c.day_number === selectedDay);
   const isMilestone = [7, 14, 21].includes(selectedDay);
+
+  // Plano de 7 dias (T-87): convite a partir do dia 5, destaque ao concluir o dia 7
+  const planoCurto = planDays < JOURNEY_DAYS.length;
+  const concluiuPlano = planoCurto && checkins.some(c => c.day_number === planDays);
+  const [diaOferta, setDiaOferta] = useState<number | null>(null);
 
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const toggle = (key: string) => setChecked(p => ({ ...p, [key]: !p[key] }));
@@ -72,7 +77,7 @@ export const HomeDailyPage: React.FC<HomeDailyPageProps> = ({
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <Pill tone="leaf">
-            Dia <span className="tnum mx-0.5 font-bold">{day.day_number}</span> de 21
+            Dia <span className="tnum mx-0.5 font-bold">{day.day_number}</span> de {planDays}
           </Pill>
           <Pill>
             Semana {day.week_number} · {day.theme}
@@ -83,6 +88,9 @@ export const HomeDailyPage: React.FC<HomeDailyPageProps> = ({
         </div>
       </header>
 
+      {/* ── Concluiu o plano de 7 dias: o melhor momento para continuar ── */}
+      {concluiuPlano && <UpgradeCard variante="concluido" className="rise" />}
+
       {/* ── Linha do tempo dos 21 dias ────────────────────────── */}
       <section
         className="rise card overflow-hidden p-5 pb-3"
@@ -91,7 +99,7 @@ export const HomeDailyPage: React.FC<HomeDailyPageProps> = ({
         data-tour="timeline"
       >
         <JourneyProgress
-          totalDays={JOURNEY_DAYS.length}
+          totalDays={planDays}
           today={unlockedUntil}
           selectedDay={selectedDay}
           loggedDays={new Set(checkins.map(c => c.day_number))}
@@ -105,8 +113,13 @@ export const HomeDailyPage: React.FC<HomeDailyPageProps> = ({
           unlockedUntil={unlockedUntil}
           loggedDays={new Set(checkins.map(c => c.day_number))}
           onSelect={setSelectedDay}
+          planLimit={planoCurto ? planDays : undefined}
+          onLockedPlanDay={setDiaOferta}
         />
       </section>
+
+      {planoCurto && !concluiuPlano && unlockedUntil >= 5 && <UpgradeCard variante="convite" />}
+      {diaOferta !== null && <UpgradeDialog dia={diaOferta} onClose={() => setDiaOferta(null)} />}
 
       {/* ── Foco do dia ───────────────────────────────────────── */}
       <Card className="rise flex items-start gap-4" style={{ animationDelay: '110ms' }}>

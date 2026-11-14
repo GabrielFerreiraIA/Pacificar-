@@ -32,7 +32,7 @@ interface PreparoPageProps {
 }
 
 export const PreparoPage: React.FC<PreparoPageProps> = ({ onOpenNutrition, onStartJourney }) => {
-  const { preparoChecked, togglePreparoItem } = useApp();
+  const { preparoChecked, togglePreparoItem, planDays } = useApp();
   const [openId, setOpenId] = useState<string | null>(PREPARO_ITEMS[0].id);
   // Foto do item em public/preparo/<id>.webp; se faltar ou falhar, volta o ícone
   const [semFoto, setSemFoto] = useState<Record<string, boolean>>({});
@@ -82,7 +82,7 @@ export const PreparoPage: React.FC<PreparoPageProps> = ({ onOpenNutrition, onSta
 
         {ready ? (
           <Button full size="lg" iconRight={ArrowRight} onClick={onStartJourney}>
-            Começar meus 21 dias
+            Começar meus {planDays} dias
           </Button>
         ) : (
           <p className="text-[13px] leading-relaxed text-ink-2">

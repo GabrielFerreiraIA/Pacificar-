@@ -20,6 +20,9 @@ interface Props {
   loggedDays: Set<number>;
   milestones?: number[];
   onSelect: (day: number) => void;
+  /** Último dia do plano comprado (T-87). Os seguintes abrem a oferta de upgrade em vez de ficarem mudos. */
+  planLimit?: number;
+  onLockedPlanDay?: (day: number) => void;
 }
 
 const WEEK_SIZE = 7;
@@ -30,7 +33,9 @@ export const JourneyTimeline: React.FC<Props> = ({
   unlockedUntil,
   loggedDays,
   milestones = [7, 14, 21],
-  onSelect
+  onSelect,
+  planLimit,
+  onLockedPlanDay
 }) => {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [canLeft, setCanLeft] = useState(false);
@@ -243,6 +248,7 @@ export const JourneyTimeline: React.FC<Props> = ({
               {days.map(n => {
                 const active = selectedDay === n;
                 const logged = loggedDays.has(n);
+                const planLocked = planLimit != null && n > planLimit;
                 const locked = n > unlockedUntil;
                 const today = n === unlockedUntil;
                 const milestone = milestones.includes(n);
@@ -255,17 +261,21 @@ export const JourneyTimeline: React.FC<Props> = ({
                     data-day={n}
                     aria-selected={active}
                     tabIndex={active ? 0 : -1}
-                    disabled={locked}
+                    disabled={locked && !(planLocked && onLockedPlanDay)}
                     aria-label={
-                      locked
+                      planLocked
+                        ? `Dia ${n}, disponível na jornada completa de 21 dias`
+                        : locked
                         ? `Dia ${n}, ainda bloqueado`
                         : `Dia ${n}${today ? ', hoje' : ''}${logged ? ', check-in feito' : ''}${
                             milestone ? ', dia do relatório' : ''
                           }`
                     }
-                    onClick={() => onSelect(n)}
+                    onClick={() => (planLocked ? onLockedPlanDay?.(n) : onSelect(n))}
                     className={`press relative flex h-[72px] w-[52px] shrink-0 snap-center flex-col items-center justify-center gap-1 rounded-field border transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-leaf-600 ${
-                      locked
+                      planLocked
+                        ? 'border-dashed border-ochre-200 bg-ochre-50/40 text-ochre-700/70 hover:border-ochre-300 hover:bg-ochre-50'
+                        : locked
                         ? 'cursor-not-allowed border-dashed border-line bg-transparent text-ink-3/60'
                         : active
                           ? 'border-leaf-600 bg-leaf-600 text-white shadow-leaf'

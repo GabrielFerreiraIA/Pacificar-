@@ -132,9 +132,10 @@ interface NutritionGuidePageProps {
 }
 
 export const NutritionGuidePage: React.FC<NutritionGuidePageProps> = ({ initialRecipe, onInitialRecipeConsumed }) => {
-  const { currentUser, role } = useApp();
+  const { role, unlockedUntil: diaAberto } = useApp();
   // Cada dia libera as receitas do prato daquele dia; a terapeuta vê tudo.
-  const unlockedUntil = role === 'admin' ? 21 : (currentUser?.current_day ?? 1);
+  // Receitas acompanham o dia aberto, limitado ao plano comprado (T-87)
+  const unlockedUntil = role === 'admin' ? 21 : diaAberto;
   const isLocked = (r: RecipeDBItem) => r.day != null && r.day > unlockedUntil;
 
   const [tab, setTab] = useState<Tab>(initialRecipe ? 'receitas' : 'guia');
