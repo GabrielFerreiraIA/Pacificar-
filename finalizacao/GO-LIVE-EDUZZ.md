@@ -1,7 +1,7 @@
 # Go-live do PACIFICAR com a Eduzz
 
 > Para o Gabriel. Escrito em 09/11/2026 (sessão T-34 / T-86). **Atualizado em 13/11/2026 (T-87): o app agora tem duas versões, 7 e 21 dias, com upgrade dentro do app.**
-> Ordem de execução: **1 → 1B → 2 → 3 → 4 → 5 → 6 → 7**. Na seção 3, os passos 3.1 e 3.2 **já foram feitos**, menos a migration nova `plano_dias` (3.2): rode ela e siga do 3.3.
+> Ordem de execução: **1 → 1B → 2 → 3 → 4 → 5 → 6 → 7**. Na seção 3, os passos 3.1 e 3.2 **já foram feitos** (inclusive a `plano_dias`, em 13/11): comece pelo 3.3.
 
 ## 0. Onde estamos
 
@@ -9,9 +9,9 @@
 |---|---|
 | App (login, anamnese, check-in, exames, painel da Ana, LGPD, PWA) | Pronto |
 | Webhook da Eduzz `api/eduzz-webhook.ts` | **Pronto e testado localmente** (assinatura, eventos, idempotência, três produtos) |
-| **Duas versões: 7 e 21 dias + upgrade** (T-87) | **Pronto no código.** Falta rodar a migration `plano_dias` (3.2) e cadastrar os produtos de 7 dias e de upgrade (1B) |
+| **Duas versões: 7 e 21 dias + upgrade** (T-87) | **Pronto.** Migration `plano_dias` aplicada em 13/11. Falta cadastrar os produtos de 7 dias e de upgrade (1B) |
 | Modo demo | **Escondido**: não há mais botão. Ver seção 8 |
-| Supabase | ✅ **Restaurado em 09/11.** Migrations até a do keep-alive aplicadas. **Pendente: `20261113120000_plano_dias.sql`.** Keep-alive interno ligado: `pg_cron` a cada 6h grava no `heartbeat` e chama a API do projeto (T-44), então ele não pausa mais nem antes do deploy |
+| Supabase | ✅ **Restaurado em 09/11.** Todas as migrations aplicadas (inclusive `plano_dias`, 13/11). Keep-alive interno ligado: `pg_cron` a cada 6h grava no `heartbeat` e chama a API do projeto (T-44), então ele não pausa mais nem antes do deploy |
 | Vercel, Eduzz, e-mail (Resend) | Falta configurar (seções 3 a 6) |
 
 **Como funciona a compra, do começo ao fim:**
@@ -266,7 +266,7 @@ Gerar um segredo aleatório (PowerShell):
    - Atualize também o `SUPABASE_DB_URL` (Connect → Session pooler) usado no backup.
    - No passo 3.2, aplique **todas** as migrations.
 
-### 3.2 Aplicar as migrations ✅ feito em 09/11 · ⚠️ falta a `plano_dias` (13/11)
+### 3.2 Aplicar as migrations ✅ feito em 09/11 e 13/11
 
 No painel: **SQL Editor → New query**, cole o conteúdo de cada arquivo e rode, **nesta ordem**:
 
@@ -279,11 +279,11 @@ No painel: **SQL Editor → New query**, cole o conteúdo de cada arquivo e rode
 | `supabase/migrations/20260924105403_pedidos_exclusao.sql` | — | rodar |
 | `supabase/migrations/20261109120000_eduzz.sql` | **rodar** | rodar |
 | `supabase/migrations/20261109230000_keepalive_cron.sql` | ✅ feito | rodar (e cadastrar os 2 segredos do Vault descritos no topo do arquivo) |
-| `supabase/migrations/20261113120000_plano_dias.sql` | **rodar (pendente)** | rodar |
+| `supabase/migrations/20261113120000_plano_dias.sql` | ✅ feito (13/11) | rodar |
 
 Confirmação: em **Table Editor → profiles**, as colunas `eduzz_invoice_id` e `plan_days` existem (e `kiwify_order_id` não). Todas as contas que já existiam ficam com `plan_days = 21`.
 
-Depois de rodar a `plano_dias` pelo SQL Editor, registre-a no histórico para a CLI não tentar reaplicar:
+Num projeto novo, depois de rodar a `plano_dias` pelo SQL Editor, registre-a no histórico para a CLI não tentar reaplicar (no projeto atual já está registrada):
 ```sql
 insert into supabase_migrations.schema_migrations(version, name) values ('20261113120000', 'plano_dias');
 ```
@@ -456,7 +456,7 @@ Se o passo 3 falhar, veja a seção 9.
 - [ ] Vercel com todas as variáveis, deploy verde, plano Pro
 - [ ] `/api/keepalive` responde `ok` e os secrets do GitHub estão cadastrados
 - [ ] Conta de terapeuta da Ana criada e testada
-- [ ] Migration `plano_dias` aplicada (coluna `plan_days` existe)
+- [x] Migration `plano_dias` aplicada (coluna `plan_days` existe)
 - [ ] Preços dos 7 dias e do upgrade definidos com a Ana
 - [ ] Três produtos aprovados na moderação da Eduzz e IDs em `EDUZZ_PRODUCT_21D`, `_7D` e `_UPGRADE`
 - [ ] Link do checkout do upgrade em `VITE_EDUZZ_UPGRADE_URL`
