@@ -78,7 +78,7 @@ Use os comandos em vez de editar à mão:  npm run tarefa -- iniciar|concluir|bl
   - Primeira venda de teste: conferir no histórico de envios da Eduzz a resposta `200` e `assinatura: hex|base64`. Salvar o payload anonimizado em `finalizacao/refs/eduzz-invoice_paid.json`.
 - [ ] **T-37** Teste de ponta a ponta de compra na Eduzz · @gabriel · dep: T-35, T-20
   - Compra com cupom de 100% → e-mail chega → define senha → entra → reembolso → acesso suspenso.
-- [~] **T-87** Duas versões (7 e 21 dias) no mesmo app, com upgrade 7→21 dentro do app · @agente · dep: T-34 · em andamento: claude (2026-11-13)
+- [x] **T-87** Duas versões (7 e 21 dias) no mesmo app, com upgrade 7→21 dentro do app · @agente · dep: T-34 · concluída: claude (2026-11-13)
   - `profiles.plan_days` (7 ou 21). Webhook mapeia produto → plano (`EDUZZ_PRODUCT_7D`, `_21D`, `_UPGRADE`). Dias 8–21 com cadeado e upsell para quem tem 7 dias. Ver D15.
 - [ ] **T-88** Cadastrar na Eduzz os produtos de 7 dias e de upgrade e o link do checkout do upgrade · @gabriel · dep: T-87, T-35
   - Passo a passo em `finalizacao/GO-LIVE-EDUZZ.md` (seção 1B). IDs em `EDUZZ_PRODUCT_7D` / `_21D` / `_UPGRADE` e link em `VITE_EDUZZ_UPGRADE_URL` na Vercel.
