@@ -447,6 +447,7 @@ export type Database = {
           journey_start_date: string | null
           eduzz_invoice_id: string | null
           phone: string | null
+          plan_days: number
           role: string
           updated_at: string
           weight: number | null
@@ -464,6 +465,7 @@ export type Database = {
           journey_start_date?: string | null
           eduzz_invoice_id?: string | null
           phone?: string | null
+          plan_days?: number
           role?: string
           updated_at?: string
           weight?: number | null
@@ -481,6 +483,7 @@ export type Database = {
           journey_start_date?: string | null
           eduzz_invoice_id?: string | null
           phone?: string | null
+          plan_days?: number
           role?: string
           updated_at?: string
           weight?: number | null

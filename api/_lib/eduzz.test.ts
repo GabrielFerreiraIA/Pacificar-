@@ -1,7 +1,7 @@
 // Testes das regras puras do webhook da Eduzz (T-34). Não toca no banco.
 // Uso: node ./node_modules/tsx/dist/cli.mjs api/_lib/eduzz.test.ts
 import { createHmac } from 'node:crypto';
-import { conferirAssinatura, interpretarEvento, produtoDoApp } from './eduzz';
+import { conferirAssinatura, efeitoDaSuspensao, interpretarEvento, lerConfigProdutos, planoAoLiberar, tipoDoProduto } from './eduzz';
 
 let falhas = 0;
 const ok = (c: boolean, m: string) => { console.log(`${c ? '✔' : '✘'} ${m}`); if (!c) falhas++; };
@@ -55,9 +55,23 @@ let lancou = false;
 try { interpretarEvento({ event: 'myeduzz.invoice_paid', data: {} }); } catch { lancou = true; }
 ok(lancou, 'Sem data.id → erro');
 
-ok(produtoDoApp(['P567'], '') === true, 'Sem filtro, qualquer produto');
-ok(produtoDoApp(['P567'], 'P1, P567') === true, 'Produto na lista');
-ok(produtoDoApp(['P999'], 'P1,P567') === false, 'Outro produto da conta é ignorado');
+// Duas versões do app (T-87): produto → plano
+const semConfig = lerConfigProdutos({});
+ok(tipoDoProduto(['P567'], semConfig) === '21d', 'Sem configuração, qualquer produto libera 21 dias (como antes)');
+const legado = lerConfigProdutos({ EDUZZ_PRODUCT_IDS: 'P1, P567' });
+ok(tipoDoProduto(['P567'], legado) === '21d', 'EDUZZ_PRODUCT_IDS (nome antigo) conta como 21 dias');
+ok(tipoDoProduto(['P999'], legado) === null, 'Outro produto da conta é ignorado');
+const cfg = lerConfigProdutos({ EDUZZ_PRODUCT_7D: 'S7', EDUZZ_PRODUCT_21D: 'S21', EDUZZ_PRODUCT_UPGRADE: 'UP, UP2' });
+ok(tipoDoProduto(['S7'], cfg) === '7d', 'Produto de 7 dias');
+ok(tipoDoProduto(['S21'], cfg) === '21d', 'Produto de 21 dias');
+ok(tipoDoProduto(['UP2'], cfg) === 'upgrade', 'Upgrade (vários ids por variável)');
+ok(tipoDoProduto(['S7', 'UP'], cfg) === 'upgrade', 'Fatura com dois itens do app: vale o que dá mais acesso');
+ok(tipoDoProduto(['X'], cfg) === null, 'Produto fora das três listas é ignorado');
+ok(planoAoLiberar('7d', null) === 7, 'Conta nova com o produto de 7 → 7 dias');
+ok(planoAoLiberar('21d', null) === 21 && planoAoLiberar('upgrade', 7) === 21, '21 dias e upgrade → 21');
+ok(planoAoLiberar('7d', 21) === 21, 'Quem já tem 21 e compra o de 7 continua com 21');
+ok(efeitoDaSuspensao('upgrade') === 'voltar-para-7', 'Estorno do upgrade volta para 7 dias');
+ok(efeitoDaSuspensao('7d') === 'suspender' && efeitoDaSuspensao('21d') === 'suspender', 'Estorno da jornada suspende');
 
 if (falhas) process.exit(1);
 console.log('\nWebhook Eduzz: regras OK');

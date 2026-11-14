@@ -6,7 +6,16 @@
 //   200 processado, duplicado, ignorado ou ping
 //   500 falha ao gravar/convidar: a Eduzz pode reenviar, e o reenvio é seguro (idempotente)
 import { supabaseAdmin } from './_lib/supabaseAdmin';
-import { conferirAssinatura, interpretarEvento, produtoDoApp, type EventoEduzz } from './_lib/eduzz';
+import {
+  conferirAssinatura,
+  efeitoDaSuspensao,
+  interpretarEvento,
+  lerConfigProdutos,
+  planoAoLiberar,
+  tipoDoProduto,
+  type EventoEduzz,
+  type TipoProduto,
+} from './_lib/eduzz';
 import type { Json } from '../src/types/database';
 
 const hoje = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' }); // AAAA-MM-DD
@@ -33,6 +42,9 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   const db = supabaseAdmin();
+  // Qual versão do app esta fatura compra: 7 dias, 21 dias ou o upgrade (T-87 · D15)
+  const tipo = tipoDoProduto(ev.produtos, lerConfigProdutos(process.env));
+  ev.resumo.tipo = tipo;
 
   // Idempotência: (order_id, event) é único. Se já foi processado, não faz nada de novo.
   const ins = await db
@@ -55,22 +67,26 @@ export async function POST(request: Request): Promise<Response> {
     let userId: string | null = null;
     let resultado = 'registrado';
 
-    if (ev.acao !== 'registrar' && !produtoDoApp(ev.produtos, process.env.EDUZZ_PRODUCT_IDS)) {
+    if (ev.acao !== 'registrar' && !tipo) {
       resultado = 'ignorado: outro produto';
-    } else if (ev.acao === 'liberar') {
+    } else if (ev.acao === 'liberar' && tipo) {
       if (!ev.email) throw new Error('fatura paga sem e-mail do comprador');
-      userId = await liberar(db, ev);
-      resultado = 'acesso liberado';
-    } else if (ev.acao === 'suspender' && ev.email) {
+      const lib = await liberar(db, ev, tipo);
+      userId = lib.id;
+      resultado = `acesso liberado: ${lib.plano} dias`;
+    } else if (ev.acao === 'suspender' && tipo && ev.email) {
+      // Estorno do upgrade não tira o acesso: a pessoa volta para os 7 dias que comprou antes
+      const patch =
+        efeitoDaSuspensao(tipo) === 'voltar-para-7' ? { plan_days: 7 } : { access_status: 'revoked' };
       const { data, error } = await db
         .from('profiles')
-        .update({ access_status: 'revoked' })
+        .update(patch)
         .eq('email', ev.email)
         .select('id')
         .maybeSingle();
       if (error) throw error;
       userId = data?.id ?? null;
-      resultado = userId ? 'acesso suspenso' : 'suspensão sem conta';
+      resultado = !userId ? 'suspensão sem conta' : 'plan_days' in patch ? 'upgrade estornado: volta para 7 dias' : 'acesso suspenso';
     }
 
     await db.from('purchases').update({ processed_at: new Date().toISOString(), user_id: userId, error: null }).eq('id', compraId);
@@ -82,10 +98,21 @@ export async function POST(request: Request): Promise<Response> {
   }
 }
 
-/** Cria o convite (conta nova) ou reativa a conta existente. Devolve o id do usuário. */
-async function liberar(db: ReturnType<typeof supabaseAdmin>, ev: EventoEduzz): Promise<string> {
+/**
+ * Cria o convite (conta nova) ou reativa a conta existente, com o plano da compra.
+ * Upgrade numa conta existente só muda o plano: a jornada continua de onde está.
+ */
+async function liberar(
+  db: ReturnType<typeof supabaseAdmin>,
+  ev: EventoEduzz,
+  tipo: TipoProduto
+): Promise<{ id: string; plano: number }> {
   const email = ev.email!;
-  const existente = await db.from('profiles').select('id, full_name, phone, journey_start_date').eq('email', email).maybeSingle();
+  const existente = await db
+    .from('profiles')
+    .select('id, full_name, phone, journey_start_date, plan_days, eduzz_invoice_id')
+    .eq('email', email)
+    .maybeSingle();
   if (existente.error) throw existente.error;
 
   let id = existente.data?.id;
@@ -99,18 +126,21 @@ async function liberar(db: ReturnType<typeof supabaseAdmin>, ev: EventoEduzz): P
     id = convite.data.user.id; // a trigger handle_new_user já criou o profile
   }
 
+  const plano = planoAoLiberar(tipo, existente.data?.plan_days);
   const { error } = await db
     .from('profiles')
     .update({
       access_status: 'active',
-      eduzz_invoice_id: ev.orderId,
+      plan_days: plano,
+      // a fatura do upgrade fica só em purchases; aqui segue a da compra original
+      eduzz_invoice_id: tipo === 'upgrade' && existente.data?.eduzz_invoice_id ? existente.data.eduzz_invoice_id : ev.orderId,
       full_name: existente.data?.full_name || ev.nome,
       phone: existente.data?.phone || ev.telefone,
       journey_start_date: existente.data?.journey_start_date ?? hoje(),
     })
     .eq('id', id);
   if (error) throw error;
-  return id;
+  return { id, plano };
 }
 
 function erro(etapa: string, msg: string): Response {

@@ -86,7 +86,7 @@ export function interpretarEvento(json: unknown): EventoEduzz {
     acao = status === 'rejected' ? 'liberar' : 'suspender';
   }
 
-  const resumo = {
+  const resumo: Record<string, unknown> = {
     eventId: env.id ?? null,
     event,
     status: data.status ?? null,
@@ -102,9 +102,55 @@ export function interpretarEvento(json: unknown): EventoEduzz {
   return { acao, evento, orderId, email, nome, telefone, produtos, resumo };
 }
 
-/** EDUZZ_PRODUCT_IDS="123,456": só esses produtos liberam o app. Vazio = qualquer produto da conta. */
-export function produtoDoApp(produtos: string[], configurado: string | undefined): boolean {
-  const ids = (configurado ?? '').split(',').map(s => s.trim()).filter(Boolean);
-  if (!ids.length) return true;
-  return produtos.some(p => ids.includes(p));
+/* ── Duas versões do app (T-87 · D15) ──────────────────────────
+   Três produtos na Eduzz, um só sistema:
+     EDUZZ_PRODUCT_7D       jornada de 7 dias
+     EDUZZ_PRODUCT_21D      jornada de 21 dias (EDUZZ_PRODUCT_IDS, o nome antigo, conta como 21)
+     EDUZZ_PRODUCT_UPGRADE  upgrade de 7 para 21, vendido dentro do app
+   Cada variável aceita vários ids separados por vírgula. Todas vazias = qualquer
+   produto da conta libera 21 dias (o comportamento de antes). */
+
+export type TipoProduto = '7d' | '21d' | 'upgrade';
+export type PlanoDias = 7 | 21;
+
+export interface ConfigProdutos {
+  p7: string[];
+  p21: string[];
+  upgrade: string[];
+}
+
+const lista = (v: string | undefined) => (v ?? '').split(',').map(s => s.trim()).filter(Boolean);
+
+export function lerConfigProdutos(env: Record<string, string | undefined>): ConfigProdutos {
+  return {
+    p7: lista(env.EDUZZ_PRODUCT_7D),
+    p21: [...lista(env.EDUZZ_PRODUCT_21D), ...lista(env.EDUZZ_PRODUCT_IDS)],
+    upgrade: lista(env.EDUZZ_PRODUCT_UPGRADE),
+  };
+}
+
+/**
+ * Qual produto do app veio na fatura. null = produto de outra coisa da Ana (ignorar).
+ * Se a fatura tiver mais de um item do app (ex.: order bump), vale o que dá mais acesso.
+ */
+export function tipoDoProduto(produtos: string[], cfg: ConfigProdutos): TipoProduto | null {
+  if (!cfg.p7.length && !cfg.p21.length && !cfg.upgrade.length) return '21d';
+  if (produtos.some(p => cfg.upgrade.includes(p))) return 'upgrade';
+  if (produtos.some(p => cfg.p21.includes(p))) return '21d';
+  if (produtos.some(p => cfg.p7.includes(p))) return '7d';
+  return null;
+}
+
+/** Dias liberados por uma compra paga. Nunca reduz: quem já tem 21 e compra o de 7 continua com 21. */
+export function planoAoLiberar(tipo: TipoProduto, atual: number | null | undefined): PlanoDias {
+  const novo: PlanoDias = tipo === '7d' ? 7 : 21;
+  return atual === 21 ? 21 : novo;
+}
+
+/**
+ * O que um reembolso/chargeback faz: estorno do upgrade só devolve a pessoa
+ * para 7 dias (ela continua com a compra original); estorno da jornada suspende.
+ */
+export function efeitoDaSuspensao(tipo: TipoProduto): 'voltar-para-7' | 'suspender' {
+  return tipo === 'upgrade' ? 'voltar-para-7' : 'suspender';
 }
