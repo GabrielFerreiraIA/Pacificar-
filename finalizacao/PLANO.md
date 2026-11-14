@@ -58,6 +58,7 @@ Levar o protótipo atual (100% `localStorage`, sem login) a um produto vendável
 | D11 | Exames: 10 MB por arquivo, cota de 20 arquivos por paciente (policy no Storage) e fotos comprimidas no aparelho antes do envio (T-50) | O Storage gratuito tem 1 GB no total. Foto de celular cai de ~3 MB para ~300 KB. PDF escaneado de laboratório precisa da folga de 10 MB. |
 | D13 | Venda pela **Eduzz** (não mais Kiwify). Webhook `api/eduzz-webhook.ts`, coluna `profiles.eduzz_invoice_id` | Decisão comercial de 09/11/2026. A Eduzz documenta o payload e a assinatura (`x-signature`, HMAC-SHA256), o que dispensa a captura prévia que a Kiwify exigia. |
 | D14 | Modo demo **sem botão**: 5 toques no logo da tela de login. O `mockData` vira um chunk separado, baixado só ao abrir a demo | A Ana continua apresentando o app em produção sem expor dados fictícios a quem compra. Substitui a variável `VITE_DEMO` (T-85), que segue só como atalho visível em preview. |
+| D15 | **Duas versões no mesmo app: 7 e 21 dias**, com upgrade 7→21 vendido dentro do app. Coluna `profiles.plan_days` (7 ou 21, padrão 21, protegida). Três produtos na Eduzz (`EDUZZ_PRODUCT_7D`, `_21D`, `_UPGRADE`); o webhook decide o plano pelo ID do produto. Compra paga nunca reduz o plano. Estorno do upgrade volta para 7 (não suspende), estorno da jornada suspende. Checkout do upgrade em `VITE_EDUZZ_UPGRADE_URL`; sem ele, o botão abre o WhatsApp da Ana | Pedido da Ana em 12/11/2026: 21 dias a R$ 1.500 e uma opção de 7 dias mais barata. Um só sistema evita manter dois apps, e o upgrade dentro do app aproveita o fim da primeira semana, quando a vontade de continuar é maior. O `current_day` continua avançando até 21; o que limita é `min(current_day, plan_days)`, então o upgrade abre o dia 8 na hora, sem ajuste de dados. |
 | D12 | Supabase Auth: **cadastro público desligado**, senha mínima de 8, link de convite/recuperação válido por 24h. Ao sair, o app apaga o cache local | Acesso só por compra (D1): com o cadastro aberto, qualquer um com a chave pública criaria conta. Quem compra nem sempre abre o e-mail na primeira hora. Celular pode ser compartilhado (LGPD). |
 
 ## Riscos que o Gabriel precisa conhecer
@@ -101,12 +102,13 @@ Envelope: `{ id, event, data, sentDate }`. Header `x-signature` = HMAC-SHA256 do
 | Evento Eduzz | Ação |
 |---|---|
 | `ping` | Responde 200 sempre (senão a URL não ativa) e devolve `assinatura` = `hex`, `base64` ou `invalida`. |
-| `myeduzz.invoice_paid` | E-mail de `data.student` (quem recebe o acesso) ou de `data.buyer`. Sem conta → `inviteUserByEmail` com `redirectTo = APP_URL/definir-senha`. Com conta → reativa. Grava nome, celular, `eduzz_invoice_id = data.id` e `journey_start_date = hoje` (se ainda vazio). |
-| `myeduzz.invoice_refunded` | `access_status = 'revoked'`. |
+| (todos) | Antes de tudo, `tipoDoProduto(data.items[].productId)` → `7d`, `21d`, `upgrade` ou `null` (outro produto: ignora). Sem nenhuma `EDUZZ_PRODUCT_*` configurada, qualquer produto vale `21d` (D15). |
+| `myeduzz.invoice_paid` | Grava `plan_days` (7 para `7d`, 21 para `21d`/`upgrade`, nunca reduz). E-mail de `data.student` (quem recebe o acesso) ou de `data.buyer`. Sem conta → `inviteUserByEmail` com `redirectTo = APP_URL/definir-senha`. Com conta → reativa. Grava nome, celular, `eduzz_invoice_id = data.id` e `journey_start_date = hoje` (se ainda vazio). |
+| `myeduzz.invoice_refunded` | `access_status = 'revoked'`. Se o produto for o upgrade: só `plan_days = 7`. |
 | `myeduzz.invoice_chargeback` | Suspende; se `data.chargeback.status = 'rejected'` (contestação recusada), reativa. A chave de idempotência inclui o status. |
 | `myeduzz.invoice_canceled` e demais | Só registra em `purchases`. |
 
-`EDUZZ_PRODUCT_IDS` (opcional) restringe a liberação aos produtos do app, para outras vendas da Ana na mesma conta não criarem login.
+`EDUZZ_PRODUCT_7D`, `EDUZZ_PRODUCT_21D` e `EDUZZ_PRODUCT_UPGRADE` dizem qual produto libera qual plano e restringem a liberação aos produtos do app, para outras vendas da Ana na mesma conta não criarem login. `EDUZZ_PRODUCT_IDS`, o nome antigo, ainda vale como 21 dias.
 Em `purchases.payload` vai só um resumo (id, status, produtos, valor): **sem CPF nem endereço** (LGPD).
 Respostas: 401 assinatura inválida, 200 processado/duplicado/ignorado, 500 falha (a Eduzz pode reenviar com segurança).
 
@@ -130,6 +132,8 @@ T-14 (migrar o AppContext) toca em quase tudo: rode **sozinha**, sem outra sess�
 | `VITE_SUPABASE_ANON_KEY` | Vercel + `.env.local` | cliente |
 | `SUPABASE_SERVICE_ROLE_KEY` | **só Vercel** (nunca `VITE_`) | funções `api/` |
 | `EDUZZ_WEBHOOK_SECRET` | só Vercel | validar `x-signature` do webhook |
-| `EDUZZ_PRODUCT_IDS` | só Vercel (opcional) | ids dos produtos que liberam o app |
+| `EDUZZ_PRODUCT_7D` / `_21D` / `_UPGRADE` | só Vercel | ids dos produtos de cada versão (D15) |
+| `VITE_EDUZZ_UPGRADE_URL` | Vercel (público) | link do checkout do upgrade, aberto pelo app |
+| `VITE_ANA_WHATSAPP` | Vercel (público) | contato da Ana e reserva do botão de upgrade |
 | `CRON_SECRET` | Vercel + GitHub Secrets | keep-alive |
 | `APP_URL` | Vercel + GitHub Secrets | redirects e keep-alive |

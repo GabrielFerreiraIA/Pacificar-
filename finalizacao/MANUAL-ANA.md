@@ -75,6 +75,16 @@ A paciente passa a ver uma tela acolhedora de **acesso pausado**, com um botão 
 
 > Quando a integração com a Eduzz estiver ativa, reembolsos e chargebacks suspendem o acesso sozinhos, e uma nova compra reativa.
 
+### Plano de 7 ou 21 dias
+
+O app tem duas versões: a **jornada de 7 dias** e a **jornada completa de 21 dias**. Na lista de pacientes, quem tem 7 dias aparece com a etiqueta **Plano 7 dias**.
+
+A paciente de 7 dias vê os dias 8 a 21 com cadeado e o convite para desbloquear a jornada completa. Quando ela compra o upgrade na Eduzz, os dias se abrem sozinhos e ela continua de onde parou.
+
+Se o pagamento for combinado por fora (Pix, cortesia), libere à mão: prontuário → aba **Prescrição** → cartão **Plano** → **Liberar 21 dias**. O mesmo cartão permite **Voltar para 7 dias**. Nada é apagado em nenhum dos dois casos.
+
+Na demonstração, o menu do topo tem **Simular plano de 7 dias**, para você ver exatamente o que a paciente vê.
+
 ---
 
 ## 5. Pedido de exclusão de conta

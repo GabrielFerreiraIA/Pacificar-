@@ -1,31 +1,60 @@
 # Go-live do PACIFICAR com a Eduzz
 
-> Para o Gabriel. Escrito em 09/11/2026 (sessão T-34 / T-86).
-> Ordem de execução: **1 → 2 → 3 → 4 → 5 → 6 → 7**. Na seção 3, os passos 3.1 e 3.2 **já foram feitos**: comece pelo 3.3.
+> Para o Gabriel. Escrito em 09/11/2026 (sessão T-34 / T-86). **Atualizado em 13/11/2026 (T-87): o app agora tem duas versões, 7 e 21 dias, com upgrade dentro do app.**
+> Ordem de execução: **1 → 1B → 2 → 3 → 4 → 5 → 6 → 7**. Na seção 3, os passos 3.1 e 3.2 **já foram feitos**, menos a migration nova `plano_dias` (3.2): rode ela e siga do 3.3.
 
 ## 0. Onde estamos
 
 | Peça | Situação |
 |---|---|
 | App (login, anamnese, check-in, exames, painel da Ana, LGPD, PWA) | Pronto |
-| Webhook da Eduzz `api/eduzz-webhook.ts` | **Pronto e testado localmente** (assinatura, eventos, idempotência) |
+| Webhook da Eduzz `api/eduzz-webhook.ts` | **Pronto e testado localmente** (assinatura, eventos, idempotência, três produtos) |
+| **Duas versões: 7 e 21 dias + upgrade** (T-87) | **Pronto no código.** Falta rodar a migration `plano_dias` (3.2) e cadastrar os produtos de 7 dias e de upgrade (1B) |
 | Modo demo | **Escondido**: não há mais botão. Ver seção 8 |
-| Supabase | ✅ **Restaurado em 09/11.** Todas as migrations aplicadas (inclusive Eduzz). Keep-alive interno ligado: `pg_cron` a cada 6h grava no `heartbeat` e chama a API do projeto (T-44), então ele não pausa mais nem antes do deploy |
+| Supabase | ✅ **Restaurado em 09/11.** Migrations até a do keep-alive aplicadas. **Pendente: `20261113120000_plano_dias.sql`.** Keep-alive interno ligado: `pg_cron` a cada 6h grava no `heartbeat` e chama a API do projeto (T-44), então ele não pausa mais nem antes do deploy |
 | Vercel, Eduzz, e-mail (Resend) | Falta configurar (seções 3 a 6) |
 
 **Como funciona a compra, do começo ao fim:**
 
 ```
-Paciente paga na Eduzz
+Paciente paga na Eduzz (produto de 7 dias OU de 21 dias)
   └─▶ Eduzz chama  https://SEU-APP/api/eduzz-webhook   (evento myeduzz.invoice_paid)
-        └─▶ o app confere a assinatura, cria o login e manda o e-mail de convite (via Resend)
+        └─▶ o app confere a assinatura, vê QUAL produto foi pago, cria o login com 7 ou 21 dias
+            e manda o e-mail de convite (via Resend)
               └─▶ paciente clica no e-mail → define a senha → aceita o termo → começa o Dia 1
-Reembolso ou chargeback na Eduzz → o acesso é suspenso (os dados ficam guardados)
+
+Quem tem 7 dias vê os dias 8 a 21 com cadeado e a oferta "Desbloquear os 21 dias"
+  └─▶ checkout do produto UPGRADE na Eduzz (mesmo e-mail) → webhook → plano vira 21
+        └─▶ ao voltar para o app, os dias se abrem sozinhos (a jornada continua de onde estava)
+
+Reembolso/chargeback da jornada → acesso suspenso (os dados ficam guardados)
+Reembolso/chargeback do upgrade → a pessoa volta para os 7 dias (não perde o acesso)
 ```
+
+### Os três produtos na Eduzz (um só app)
+
+| Produto | Para quem | Preço | Variável na Vercel |
+|---|---|---|---|
+| **Jornada de 21 dias** | Quem quer o programa completo | **R$ 1.500** (valor da Ana, 12/11) | `EDUZZ_PRODUCT_21D` |
+| **Jornada de 7 dias** | Porta de entrada, ticket menor | **[definir com a Ana]** | `EDUZZ_PRODUCT_7D` |
+| **Upgrade 7 → 21 dias** | Só quem já tem os 7 dias. Vendido **dentro do app**, sem divulgar | **[definir com a Ana]** | `EDUZZ_PRODUCT_UPGRADE` + link em `VITE_EDUZZ_UPGRADE_URL` |
+
+**Sugestão de preço** (a decisão é da Ana): 7 dias a **R$ 397** e upgrade a **R$ 1.103**. Assim quem começa pelos 7 dias e faz o upgrade paga os mesmos R$ 1.500 de quem comprou direto. Ninguém se sente punido por ter testado antes, e os 21 dias continuam valendo R$ 1.500. Se quiserem um empurrão, o upgrade pode sair a **R$ 997** (R$ 1.394 no total), um desconto real para quem já está dentro.
+
+**Onde a oferta de upgrade aparece no app** (só para quem tem 7 dias):
+1. **Home, a partir do dia 5:** cartão "Faltam X dias para concluir seu plano".
+2. **Home, depois do check-in do dia 7:** cartão de destaque "Você concluiu os 7 dias · Continue até o dia 21", com o que vem nas semanas 2 e 3. É o momento de maior vontade de continuar.
+3. **Tela de parabéns do check-in do dia 7:** o mesmo cartão, logo abaixo do "Dia 07 concluído".
+4. **Linha do tempo:** os dias 8 a 21 aparecem com cadeado dourado e, ao tocar, abrem a janela da oferta.
+5. **Perfil:** "Seu plano: jornada de 7 dias", com o botão.
+
+Depois de pagar, a pessoa volta para o app. Ele confere o plano sozinho quando a tela volta ao primeiro plano, e há um botão "Já paguei, atualizar". Enquanto `VITE_EDUZZ_UPGRADE_URL` não estiver configurada, o botão abre o WhatsApp da Ana com a mensagem pronta, para nenhuma venda travar.
+
+A Ana também pode liberar os 21 dias à mão (ex.: pagamento por Pix fora da Eduzz): **Painel → paciente → Prescrição → "Plano: jornada de 7 dias" → Liberar 21 dias**.
 
 ---
 
-## 1. Respostas do formulário "Novo Produto Digital" da Eduzz
+## 1. Produto de 21 dias: respostas do formulário "Novo Produto Digital"
 
 Caminho: Órbita Eduzz → **Produtos → Novo Produto → Produto digital**.
 
@@ -71,7 +100,7 @@ Seus dados de saúde são tratados conforme a LGPD: só você e a sua terapeuta 
 |---|---|
 | Tipo de cobrança | **Única** (a jornada tem começo, meio e fim; não é assinatura) |
 | Moeda | BRL (já vem fixo) |
-| Preço | **[definir com a Ana]** |
+| Preço | **R$ 1.500,00** (definido pela Ana em 12/11). Parcelamento: deixe o máximo que a Eduzz oferecer, ticket alto vende parcelado |
 | Nome na fatura do cartão (EDZ + até 10 letras) | `PACIFICAR` (9 letras). Vai aparecer como **EDZ PACIFICAR**, que a pessoa reconhece e reduz chargeback |
 
 ### Recuperação de vendas
@@ -101,7 +130,86 @@ Não escolha Nutror, Alpaclass nem "área de membros": o conteúdo está no app.
 
 ### Depois de salvar
 
-Clique em **Pronto para vender** (vai para moderação). Quando o produto for criado, anote o **código/ID do produto** (Meus Produtos → coluna ID). Ele vai na variável `EDUZZ_PRODUCT_IDS` (seção 4).
+Clique em **Pronto para vender** (vai para moderação). Quando o produto for criado, anote o **código/ID do produto** (Meus Produtos → coluna ID). Ele vai na variável `EDUZZ_PRODUCT_21D` (seção 4).
+
+---
+
+## 1B. Produtos de 7 dias e de upgrade (T-88)
+
+Crie os dois do mesmo jeito da seção 1 (**Novo Produto → Produto digital**). Repita tudo o que não está escrito aqui: categorias, e-mail de suporte, cobrança **Única**, nome na fatura `PACIFICAR`, recuperação de vendas, entrega por link externo e PLR em branco. A **imagem** pode ser a mesma, com um selo "7 dias" ou "Upgrade".
+
+> O webhook decide o plano **pelo ID do produto**. Por isso são três produtos separados, e não três ofertas do mesmo produto.
+
+### Produto "Jornada de 7 dias"
+
+**Título:**
+```
+Pacificar — Jornada de 7 Dias de Desinflamação e Saúde Integrativa
+```
+
+**Descrição:**
+```
+O Pacificar é um aplicativo de acompanhamento criado pela terapeuta Ana Carla Nesi (CRP 17/2833), que une Ayurveda, alimentação de verdade e saúde integrativa para ajudar você a desinflamar o corpo com gentileza e constância.
+
+Esta é a jornada de 7 dias: a primeira semana do programa, dedicada à desinflamação e à limpeza do terreno biológico.
+
+O que você recebe ao comprar:
+• Acesso ao app Pacificar por e-mail, logo após a confirmação do pagamento. Funciona no celular e no computador e pode ser instalado na tela inicial.
+• 7 dias guiados: a cada dia, um tema, cardápio sugerido (café da manhã, almoço, jantar e chá) e uma prática simples de autocuidado.
+• Anamnese completa de saúde integrativa, que a Ana usa para personalizar suas orientações.
+• Check-in diário de sintomas, sono, digestão e energia, com o relatório da sua primeira semana.
+• Guia de nutrição com receitas anti-inflamatórias feitas com ingredientes brasileiros.
+• Envio de exames laboratoriais pelo próprio app, de forma privada e segura.
+
+Quer continuar depois dos 7 dias? Dentro do próprio app você pode desbloquear a jornada completa de 21 dias, sem recomeçar: seus registros continuam.
+
+Como funciona:
+1. Após a compra, você recebe um e-mail com o convite para criar sua senha.
+2. Você preenche a anamnese e começa o Dia 1 quando quiser.
+3. A Ana acompanha suas respostas e envia suas orientações pelo app.
+
+Importante: o Pacificar é um programa educativo e de acompanhamento em saúde integrativa. Ele não substitui consulta, diagnóstico ou tratamento médico. Não interrompa medicamentos sem orientação do seu médico.
+
+Seus dados de saúde são tratados conforme a LGPD: só você e a sua terapeuta têm acesso.
+```
+
+**Preço:** [definir com a Ana]. Sugestão no início deste guia (R$ 397).
+**Depois de salvar:** o ID vai em `EDUZZ_PRODUCT_7D`.
+
+### Produto "Upgrade para 21 dias"
+
+**Título:**
+```
+Pacificar — Upgrade para a Jornada Completa de 21 Dias
+```
+
+**Descrição:**
+```
+Upgrade exclusivo para quem já faz a jornada de 7 dias do Pacificar, o aplicativo de saúde integrativa e Ayurveda da terapeuta Ana Carla Nesi (CRP 17/2833).
+
+O que você desbloqueia:
+• Semana 2 · Agni e vitalidade: restauração do fogo digestivo, com sete novos dias de cardápio, prática de autocuidado e foco diário.
+• Semana 3 · Harmonia mente-corpo: consolidação dos hábitos para que eles fiquem com você depois da jornada.
+• Relatórios de evolução dos dias 14 e 21 (energia, sono, inchaço e digestão), acompanhados pela Ana.
+
+Sua jornada continua de onde parou: anamnese, check-ins e exames ficam como estão.
+
+Importante: compre com o MESMO e-mail que você usa para entrar no app. É por ele que o acesso é liberado, em poucos minutos após a confirmação do pagamento.
+
+O Pacificar é um programa educativo e de acompanhamento em saúde integrativa. Ele não substitui consulta, diagnóstico ou tratamento médico.
+```
+
+**Preço:** [definir com a Ana]. Sugestão: R$ 1.103 (total igual aos 21 dias) ou R$ 997 (incentivo).
+**Entrega (texto para o comprador):**
+```
+Pronto! Volte para o app Pacificar: em poucos minutos os dias 8 a 21 se abrem sozinhos.
+Se ainda estiverem com cadeado, toque em "Já paguei, atualizar". Use sempre o mesmo e-mail do app.
+```
+**Vitrine:** não divulgue nem coloque na página de vendas. Ele só faz sentido para quem já tem os 7 dias, e quem compra sem ter conta recebe os 21 dias direto (o webhook trata assim, então nada quebra, mas sai mais barato que o produto de 21).
+**Depois de salvar:**
+1. O ID vai em `EDUZZ_PRODUCT_UPGRADE`.
+2. Copie o **link do checkout** (Meus Produtos → produto → Links de divulgação / Checkout) e coloque em `VITE_EDUZZ_UPGRADE_URL` na Vercel. É o link que o botão "Desbloquear os 21 dias" abre.
+3. O app acrescenta `?email=<e-mail da paciente>` ao link para tentar deixar o e-mail preenchido. Na compra de teste (seção 7), confira se o checkout vem com o e-mail preenchido. Se não vier, nada quebra: a pessoa digita, e a descrição já pede o mesmo e-mail.
 
 ---
 
@@ -112,7 +220,8 @@ Clique em **Pronto para vender** (vai para moderação). Quando o produto for cr
 | Item | Para quê | Onde vai |
 |---|---|---|
 | E-mail profissional | Suporte na Eduzz e conta de terapeuta no app | Eduzz + script da seção 5 |
-| Preço | Formulário da Eduzz | Eduzz |
+| Preço dos 21 dias | ✅ R$ 1.500 (12/11) | Eduzz |
+| Preço dos 7 dias e do upgrade | Formulários da seção 1B (sugestão no início do guia) | Eduzz |
 | WhatsApp (só dígitos, ex.: `5547999998888`) | Botão de contato e tela de acesso suspenso | `VITE_ANA_WHATSAPP` na Vercel |
 | Imagem do produto (quadrada) | Vitrine e checkout | Eduzz |
 | Validação da política de privacidade e termos de uso (T-61) | Exigência da LGPD para dado de saúde | Link no app e na página de vendas |
@@ -157,7 +266,7 @@ Gerar um segredo aleatório (PowerShell):
    - Atualize também o `SUPABASE_DB_URL` (Connect → Session pooler) usado no backup.
    - No passo 3.2, aplique **todas** as migrations.
 
-### 3.2 Aplicar as migrations ✅ feito em 09/11
+### 3.2 Aplicar as migrations ✅ feito em 09/11 · ⚠️ falta a `plano_dias` (13/11)
 
 No painel: **SQL Editor → New query**, cole o conteúdo de cada arquivo e rode, **nesta ordem**:
 
@@ -169,9 +278,15 @@ No painel: **SQL Editor → New query**, cole o conteúdo de cada arquivo e rode
 | `supabase/migrations/20260924042845_storage_exames.sql` | — | rodar |
 | `supabase/migrations/20260924105403_pedidos_exclusao.sql` | — | rodar |
 | `supabase/migrations/20261109120000_eduzz.sql` | **rodar** | rodar |
-| `supabase/migrations/20261109230000_keepalive_cron.sql` | **rodar** | rodar (e cadastrar os 2 segredos do Vault descritos no topo do arquivo) |
+| `supabase/migrations/20261109230000_keepalive_cron.sql` | ✅ feito | rodar (e cadastrar os 2 segredos do Vault descritos no topo do arquivo) |
+| `supabase/migrations/20261113120000_plano_dias.sql` | **rodar (pendente)** | rodar |
 
-Confirmação: em **Table Editor → profiles**, a coluna `eduzz_invoice_id` existe (e `kiwify_order_id` não).
+Confirmação: em **Table Editor → profiles**, as colunas `eduzz_invoice_id` e `plan_days` existem (e `kiwify_order_id` não). Todas as contas que já existiam ficam com `plan_days = 21`.
+
+Depois de rodar a `plano_dias` pelo SQL Editor, registre-a no histórico para a CLI não tentar reaplicar:
+```sql
+insert into supabase_migrations.schema_migrations(version, name) values ('20261113120000', 'plano_dias');
+```
 
 > Se preferir, me chame numa sessão com o Supabase de volta no ar que eu aplico e testo (`supabase/tests/rls_test.sql`, testes E2E).
 
@@ -222,7 +337,11 @@ git push origin main
 | `APP_URL` | `https://SEU-APP` (sem barra no final) |
 | `CRON_SECRET` | o segredo aleatório gerado na seção 2 |
 | `EDUZZ_WEBHOOK_SECRET` | a chave secreta do webhook (seção 6, passo 3) |
-| `EDUZZ_PRODUCT_IDS` | o ID do produto na Eduzz (seção 1). Mais de um: `123,456` |
+| `EDUZZ_PRODUCT_21D` | ID do produto de 21 dias (seção 1) |
+| `EDUZZ_PRODUCT_7D` | ID do produto de 7 dias (seção 1B) |
+| `EDUZZ_PRODUCT_UPGRADE` | ID do produto de upgrade (seção 1B) |
+| `VITE_EDUZZ_UPGRADE_URL` | link do checkout do upgrade (seção 1B). Vazio = o botão abre o WhatsApp da Ana |
+| `EDUZZ_PRODUCT_IDS` | **não criar** (nome antigo; se existir, conta como 21 dias) |
 | `VITE_ANA_WHATSAPP` | WhatsApp da Ana, só dígitos |
 | `VITE_DEMO` | **não criar** (ou deixar vazio) |
 
@@ -266,7 +385,7 @@ O webhook novo fica no **Console de desenvolvedor** da Eduzz: no topo da Órbita
    - ✅ Reembolsada (`myeduzz.invoice_refunded`)
    - ✅ Chargeback (`myeduzz.invoice_chargeback`)
    - ✅ Cancelada (`myeduzz.invoice_canceled`)
-5. **Filtro (opcional):** se a tela permitir filtrar por produto, filtre pelo ID do produto Pacificar. É redundante com `EDUZZ_PRODUCT_IDS`, mas reduz chamadas.
+5. **Filtro (opcional):** se a tela permitir filtrar por produto, marque os **três** produtos Pacificar (7 dias, 21 dias e upgrade). É redundante com as variáveis `EDUZZ_PRODUCT_*`, mas reduz chamadas. Se esquecer o upgrade aqui, o upgrade pago não libera nada.
 6. **Verificar URL** e depois **Ativar**. A Eduzz manda um evento `ping`.
 7. **Confira a resposta do ping** no **Histórico de envios**:
    - `{"ok":true,"ping":true,"assinatura":"hex"}` ou `"base64"` → ✅ tudo certo.
@@ -287,7 +406,12 @@ O webhook novo fica no **Console de desenvolvedor** da Eduzz: no topo da Órbita
 5. Entre como Ana: a paciente de teste aparece no painel.
 6. Na Eduzz, **reembolse** a compra de teste → a paciente vê a tela de acesso suspenso.
 7. Supabase → Table Editor → `purchases`: as linhas `myeduzz.invoice_paid` e `myeduzz.invoice_refunded` com `processed_at` preenchido e `error` vazio.
-8. Me mande o JSON do evento (Histórico de envios → detalhes) **com nome, e-mail, CPF e endereço trocados por fictícios**. Eu salvo em `finalizacao/refs/` e fecho a T-36.
+8. **Plano de 7 dias e upgrade** (com outro e-mail seu, sem conta):
+   - Compre o produto de **7 dias** com cupom de 100% → histórico: `"resultado":"acesso liberado: 7 dias"`. No app: "Dia 1 de 7" e os dias 8 a 21 com cadeado dourado.
+   - Toque num dia com cadeado → a janela da oferta abre → **Desbloquear os 21 dias** → o checkout do upgrade abre (confira se o e-mail veio preenchido).
+   - Compre o **upgrade** com cupom de 100% e o mesmo e-mail → histórico: `"resultado":"acesso liberado: 21 dias"`. Volte para o app: os dias se abrem sozinhos (ou toque em "Já paguei, atualizar").
+   - **Reembolse só o upgrade** → histórico: `"upgrade estornado: volta para 7 dias"`. O app volta a mostrar cadeado a partir do dia 8, mas a pessoa continua entrando.
+9. Me mande o JSON do evento (Histórico de envios → detalhes) **com nome, e-mail, CPF e endereço trocados por fictícios**. Eu salvo em `finalizacao/refs/` e fecho a T-36.
 
 Se o passo 3 falhar, veja a seção 9.
 
@@ -297,7 +421,7 @@ Se o passo 3 falhar, veja a seção 9.
 
 - **Na produção não existe botão.** Quem compra nunca vê dados fictícios.
 - **Para abrir:** na tela de login, toque **5 vezes seguidas no logo** (em até 3 segundos). Abre a demo com a paciente fictícia "Camila", sem login e sem tocar no banco.
-- **Dentro da demo:** o menu do topo (ícone de perfil) troca entre **Visão do paciente** e **Painel da terapeuta**, e tem **Sair da demonstração**.
+- **Dentro da demo:** o menu do topo (ícone de perfil) troca entre **Visão do paciente** e **Painel da terapeuta**, tem **Simular plano de 7 dias** (para a Ana ver a oferta de upgrade como a paciente vê) e **Sair da demonstração**.
 - Recarregar a página mantém a demo aberta naquela aba. Fechar a aba ou "Sair da demonstração" volta ao login.
 - Tudo o que se faz na demo fica só no navegador de quem testa.
 - Os dados fictícios ficam num arquivo separado, baixado só quando alguém faz o gesto.
@@ -312,7 +436,10 @@ Se o passo 3 falhar, veja a seção 9.
 | `invoice_paid` com **401** | Mesmo motivo acima | Idem. Depois clique em **Reenviar** no histórico da Eduzz |
 | `invoice_paid` com **500** e erro de SMTP / "Error sending invite email" | Resend não configurado | Seção 3.4. Depois reenvie o evento (é seguro: não duplica) |
 | `invoice_paid` com **500** "SUPABASE_URL … ausente" | Faltou variável na Vercel | Seção 4.2 + redeploy |
-| `"resultado":"ignorado: outro produto"` | `EDUZZ_PRODUCT_IDS` com ID errado | Confira o ID do produto, corrija e reenvie |
+| `"resultado":"ignorado: outro produto"` | ID errado em `EDUZZ_PRODUCT_7D` / `_21D` / `_UPGRADE` | Confira o ID do produto, corrija, faça redeploy e reenvie |
+| Comprou o upgrade, mas os dias seguem com cadeado | Comprou com outro e-mail (o histórico mostra `suspensão sem conta` ou cria uma conta nova) ou faltou o redeploy depois de criar `EDUZZ_PRODUCT_UPGRADE` | Painel da Ana → paciente → Prescrição → **Liberar 21 dias**. Depois confira as variáveis |
+| Botão "Desbloquear os 21 dias" abre o WhatsApp | `VITE_EDUZZ_UPGRADE_URL` vazia ou sem redeploy | Cadastre o link (1B) e faça redeploy (variável `VITE_` só entra no build) |
+| Paciente de 7 dias recebeu 21 | Produto de 7 dias não está em `EDUZZ_PRODUCT_7D` e todas as variáveis estão vazias (aí qualquer produto libera 21) | Preencha as três variáveis. Corrija a paciente no painel (**Voltar para 7 dias**) |
 | Convite chega, mas o link abre página de erro | Redirect URL faltando no Supabase | Seção 3.3 |
 | Pessoa diz que não recebeu o e-mail | Spam ou e-mail digitado errado na compra | Supabase → Authentication → Users: se o e-mail está lá, clique em "Send magic link/invite" de novo |
 | Supabase pausou de novo | Keep-alive parado | Seção 4.3. Veja a tabela `heartbeat`: deve ter linhas `supabase-cron` a cada 6h. No SQL Editor: `select * from cron.job_run_details order by start_time desc limit 5` e `select status_code from net._http_response order by created desc limit 5` |
@@ -329,8 +456,12 @@ Se o passo 3 falhar, veja a seção 9.
 - [ ] Vercel com todas as variáveis, deploy verde, plano Pro
 - [ ] `/api/keepalive` responde `ok` e os secrets do GitHub estão cadastrados
 - [ ] Conta de terapeuta da Ana criada e testada
-- [ ] Produto aprovado na moderação da Eduzz e ID anotado em `EDUZZ_PRODUCT_IDS`
+- [ ] Migration `plano_dias` aplicada (coluna `plan_days` existe)
+- [ ] Preços dos 7 dias e do upgrade definidos com a Ana
+- [ ] Três produtos aprovados na moderação da Eduzz e IDs em `EDUZZ_PRODUCT_21D`, `_7D` e `_UPGRADE`
+- [ ] Link do checkout do upgrade em `VITE_EDUZZ_UPGRADE_URL`
 - [ ] Webhook ativo na Eduzz, ping com `"assinatura":"hex"` ou `"base64"`
 - [ ] Compra de teste → convite → senha → app → reembolso → acesso suspenso
+- [ ] Compra de 7 dias → cadeado no dia 8 → upgrade → 21 dias liberados → estorno do upgrade → volta para 7
 - [ ] Política de privacidade e termos validados (T-61)
 - [ ] Testado em iPhone e Android reais (T-74)
