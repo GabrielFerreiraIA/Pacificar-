@@ -178,7 +178,7 @@ export const LoginPage: React.FC<{ onDemo?: () => void }> = ({ onDemo }) => {
       lead={
         esqueci
           ? 'Digite o e-mail usado na compra. Enviaremos um link para você criar uma senha nova.'
-          : 'Use o e-mail da sua compra e a senha que você criou pelo convite.'
+          : 'Use o e-mail escolhido na compra. No primeiro acesso, a senha que você digitar (mín. 8 caracteres) será salva como a sua senha.'
       }
     >
       <form onSubmit={esqueci ? pedirLink : entrar} noValidate className="space-y-4">

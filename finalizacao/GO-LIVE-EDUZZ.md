@@ -8,20 +8,20 @@
 | Peça | Situação |
 |---|---|
 | App (login, anamnese, check-in, exames, painel da Ana, LGPD, PWA) | Pronto |
-| Webhook da Eduzz `api/eduzz-webhook.ts` | **Pronto e testado localmente** (assinatura, eventos, idempotência, três produtos) |
+| Webhook da Eduzz `api/eduzz-webhook.ts` + `api/primeiro-acesso.ts` | **Pronto e sem verificação de e-mail (T-89):** a compra cria a conta já ativa e a paciente escolhe a senha direto na tela de login do app |
 | **Duas versões: 7 e 21 dias + upgrade** (T-87) | **Pronto.** Migration `plano_dias` aplicada em 13/11. Falta cadastrar os produtos de 7 dias e de upgrade (1B) |
 | Modo demo | **Escondido**: não há mais botão. Ver seção 8 |
-| Supabase | ✅ **Restaurado em 09/11.** Todas as migrations aplicadas (inclusive `plano_dias`, 13/11). Keep-alive interno ligado: `pg_cron` a cada 6h grava no `heartbeat` e chama a API do projeto (T-44), então ele não pausa mais nem antes do deploy |
-| Vercel, Eduzz, e-mail (Resend) | Falta configurar (seções 3 a 6) |
+| Supabase | ✅ **Ativo e configurado.** Todas as migrations aplicadas (inclusive `plano_dias`, 13/11). Cadastro público desligado (`disable_signup = true`), senha mín. 8 e expiração 24h já configurados. Keep-alive interno ligado (`pg_cron` a cada 6h) |
+| Vercel (`https://detoxpacificar21.vercel.app`), Eduzz | Deploy no ar; falta cadastrar produtos/webhook na Eduzz (seções 1, 1B, 4 e 6) |
 
-**Como funciona a compra, do começo ao fim:**
+**Como funciona a compra, do começo ao fim (sem verificação de e-mail):**
 
 ```
 Paciente paga na Eduzz (produto de 7 dias OU de 21 dias)
-  └─▶ Eduzz chama  https://SEU-APP/api/eduzz-webhook   (evento myeduzz.invoice_paid)
-        └─▶ o app confere a assinatura, vê QUAL produto foi pago, cria o login com 7 ou 21 dias
-            e manda o e-mail de convite (via Resend)
-              └─▶ paciente clica no e-mail → define a senha → aceita o termo → começa o Dia 1
+  └─▶ Eduzz chama  https://detoxpacificar21.vercel.app/api/eduzz-webhook   (evento myeduzz.invoice_paid)
+        └─▶ o app confere a assinatura, vê QUAL produto foi pago e cria a conta JÁ ATIVA (email_confirm: true)
+              └─▶ paciente abre o app → digita o e-mail da compra + a senha que quer usar → entra no Dia 1 na hora
+```
 
 Quem tem 7 dias vê os dias 8 a 21 com cadeado e a oferta "Desbloquear os 21 dias"
   └─▶ checkout do produto UPGRADE na Eduzz (mesmo e-mail) → webhook → plano vira 21
@@ -70,7 +70,7 @@ Pacificar — Jornada de 21 Dias de Desinflamação e Saúde Integrativa
 O Pacificar é um aplicativo de acompanhamento de 21 dias criado pela terapeuta Ana Carla Nesi (CRP 17/2833), que une Ayurveda, alimentação de verdade e saúde integrativa para ajudar você a desinflamar o corpo com gentileza e constância.
 
 O que você recebe ao comprar:
-• Acesso ao app Pacificar por e-mail, logo após a confirmação do pagamento. Funciona no celular e no computador e pode ser instalado na tela inicial.
+• Acesso imediato ao app Pacificar logo após a confirmação do pagamento, usando o e-mail da compra. Funciona no celular e no computador e pode ser instalado na tela inicial.
 • Jornada guiada de 21 dias: a cada dia, um tema, cardápio sugerido (café da manhã, almoço, jantar e chá) e uma prática simples de autocuidado.
 • Anamnese completa de saúde integrativa, que a Ana usa para personalizar suas orientações.
 • Check-in diário de sintomas, sono, digestão e energia, com relatório semanal da sua evolução.
@@ -79,8 +79,8 @@ O que você recebe ao comprar:
 • Envio de exames laboratoriais pelo próprio app, de forma privada e segura.
 
 Como funciona:
-1. Após a compra, você recebe um e-mail com o convite para criar sua senha.
-2. Você preenche a anamnese e começa o Dia 1 quando quiser.
+1. Assim que o pagamento é confirmado, sua conta é liberada automaticamente com o e-mail da compra.
+2. Você abre o app, digita o e-mail da compra, escolhe sua senha e começa o Dia 1 quando quiser.
 3. A Ana acompanha suas respostas e envia suas orientações pelo app.
 
 Importante: o Pacificar é um programa educativo e de acompanhamento em saúde integrativa. Ele não substitui consulta, diagnóstico ou tratamento médico. Não interrompa medicamentos sem orientação do seu médico.
@@ -116,12 +116,12 @@ Seus dados de saúde são tratados conforme a LGPD: só você e a sua terapeuta 
 
 O acesso é entregue **pelo nosso webhook** (seção 6), não por área de membros da Eduzz. Em **Adicionar Entrega**, escolha a opção de **link externo / entrega personalizada** (o nome varia) e use:
 
-- **Link:** `https://SEU-APP` (a URL final da Vercel ou o domínio próprio)
+- **Link:** `https://detoxpacificar21.vercel.app` (ou o domínio próprio, quando houver)
 - **Texto para o comprador:**
   ```
-  Seu acesso ao Pacificar chega por e-mail em poucos minutos, no endereço usado na compra.
-  Abra o e-mail "Sua jornada no Pacificar começa aqui", crie sua senha e comece a jornada.
-  Não chegou? Confira a caixa de spam ou fale com a Ana pelo e-mail de suporte.
+  Seu acesso ao Pacificar já foi liberado com o mesmo e-mail usado na compra!
+  Abra o link do aplicativo, digite o e-mail da sua compra e escolha uma senha (mínimo de 8 caracteres) para entrar na sua jornada.
+  Qualquer dúvida, fale com a Ana pelo e-mail de suporte.
   ```
 
 Não escolha Nutror, Alpaclass nem "área de membros": o conteúdo está no app.
@@ -156,7 +156,7 @@ O Pacificar é um aplicativo de acompanhamento criado pela terapeuta Ana Carla N
 Esta é a jornada de 7 dias: a primeira semana do programa, dedicada à desinflamação e à limpeza do terreno biológico.
 
 O que você recebe ao comprar:
-• Acesso ao app Pacificar por e-mail, logo após a confirmação do pagamento. Funciona no celular e no computador e pode ser instalado na tela inicial.
+• Acesso imediato ao app Pacificar logo após a confirmação do pagamento, usando o e-mail da compra. Funciona no celular e no computador e pode ser instalado na tela inicial.
 • 7 dias guiados: a cada dia, um tema, cardápio sugerido (café da manhã, almoço, jantar e chá) e uma prática simples de autocuidado.
 • Anamnese completa de saúde integrativa, que a Ana usa para personalizar suas orientações.
 • Check-in diário de sintomas, sono, digestão e energia, com o relatório da sua primeira semana.
@@ -166,8 +166,8 @@ O que você recebe ao comprar:
 Quer continuar depois dos 7 dias? Dentro do próprio app você pode desbloquear a jornada completa de 21 dias, sem recomeçar: seus registros continuam.
 
 Como funciona:
-1. Após a compra, você recebe um e-mail com o convite para criar sua senha.
-2. Você preenche a anamnese e começa o Dia 1 quando quiser.
+1. Assim que o pagamento é confirmado, sua conta é liberada automaticamente com o e-mail da compra.
+2. Você abre o app, digita o e-mail da compra, escolhe sua senha e começa o Dia 1 quando quiser.
 3. A Ana acompanha suas respostas e envia suas orientações pelo app.
 
 Importante: o Pacificar é um programa educativo e de acompanhamento em saúde integrativa. Ele não substitui consulta, diagnóstico ou tratamento médico. Não interrompa medicamentos sem orientação do seu médico.
@@ -294,17 +294,20 @@ insert into supabase_migrations.schema_migrations(version, name) values ('202611
 
 ### 3.3 Autenticação (Authentication → Sign In / Providers e URL Configuration)
 
-| Configuração | Valor | Por quê |
+> ✅ Os 3 primeiros itens **já estão configurados** no Supabase (`zuhodbucdsabztgxefdq`), e o webhook cria a conta com `email_confirm: true` (sem verificação de e-mail). As URLs abaixo servem apenas caso a paciente use "Esqueci minha senha".
+
+| Configuração | Valor | Situação |
 |---|---|---|
-| Allow new users to sign up | **Desligado** | Acesso só por compra (D12) |
-| Minimum password length | **8** | |
-| Email OTP / link expiration | **86400** (24h) | Quem compra nem sempre abre o e-mail na hora |
-| Site URL | `https://SEU-APP` | |
-| Redirect URLs | `https://SEU-APP/definir-senha` e `https://SEU-APP/**` | O link do convite volta para o app |
+| Allow new users to sign up | **Desligado** (`disable_signup = true`) | ✅ Já configurado |
+| Minimum password length | **8** | ✅ Já configurado |
+| Email OTP / link expiration | **86400** (24h) | ✅ Já configurado |
+| Verificação de e-mail na compra | **Dispensada** (`email_confirm: true` no webhook + `api/primeiro-acesso.ts`) | ✅ Feito (T-89) |
+| Site URL (opcional, para recuperação de senha) | `https://detoxpacificar21.vercel.app` | Configurar no painel se usar recuperação por e-mail |
+| Redirect URLs (opcional, para recuperação de senha) | `https://detoxpacificar21.vercel.app/definir-senha` e `https://detoxpacificar21.vercel.app/**` | Configurar no painel se usar recuperação por e-mail |
 
-### 3.4 E-mail que chega de verdade (Resend)
+### 3.4 E-mail de recuperação de senha (Resend — opcional para o go-live)
 
-Sem isso o convite **não chega** para quem compra: o SMTP padrão do Supabase só envia para a equipe do projeto.
+Como a compra libera a conta na hora sem verificação de e-mail (T-89), **você não precisa do Resend para vender nem para a paciente entrar no app**. O Resend só é usado se a paciente clicar em "Esqueci minha senha" para receber link por e-mail (enquanto não tiver, a Ana ou você podem redefinir).
 
 1. resend.com → crie a conta → **Domains → Add domain** com o domínio da Ana (ex.: `pacificar.com.br`) → copie os registros DNS para o provedor do domínio → espere ficar **Verified**.
 2. Resend → **API Keys → Create** (permissão Sending).

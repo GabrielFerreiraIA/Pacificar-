@@ -173,8 +173,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = useCallback(async (email: string, password: string) => {
     if (!supabase) return 'O aplicativo ainda não está conectado ao servidor.';
-    const { error } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
-    return error ? traduzirErroAuth(error.message) : null;
+    const emailLimpo = email.trim().toLowerCase();
+    const { error } = await supabase.auth.signInWithPassword({ email: emailLimpo, password });
+    if (!error) return null;
+
+    // Primeiro acesso sem verificação de e-mail (T-89): se o webhook criou a conta da compra
+    // com needs_password = true, grava a senha escolhida e entra na sequência.
+    if (error.message.toLowerCase().includes('invalid login credentials')) {
+      try {
+        const res = await fetch('/api/primeiro-acesso', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: emailLimpo, password }),
+        });
+        const ct = res.headers.get('content-type') ?? '';
+        if (ct.includes('application/json')) {
+          const json = (await res.json()) as { ok?: boolean; codigo?: string; error?: string };
+          if (json.ok) {
+            const { error: erroDepois } = await supabase.auth.signInWithPassword({ email: emailLimpo, password });
+            return erroDepois ? traduzirErroAuth(erroDepois.message) : null;
+          }
+          if ((json.codigo === 'suspenso' || json.codigo === 'senha_curta') && json.error) return json.error;
+        }
+      } catch {
+        /* Em preview estático sem funções api/, mantém o erro padrão de login */
+      }
+    }
+
+    return traduzirErroAuth(error.message);
   }, []);
 
   const sendPasswordReset = useCallback(async (email: string) => {

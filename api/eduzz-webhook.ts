@@ -99,7 +99,8 @@ export async function POST(request: Request): Promise<Response> {
 }
 
 /**
- * Cria o convite (conta nova) ou reativa a conta existente, com o plano da compra.
+ * Cria a conta já ativa (sem verificação de e-mail) ou reativa a conta existente, com o plano da compra.
+ * A paciente define a própria senha no primeiro acesso ao app (api/primeiro-acesso.ts).
  * Upgrade numa conta existente só muda o plano: a jornada continua de onde está.
  */
 async function liberar(
@@ -117,13 +118,13 @@ async function liberar(
 
   let id = existente.data?.id;
   if (!id) {
-    const appUrl = (process.env.APP_URL ?? '').replace(/\/$/, '');
-    const convite = await db.auth.admin.inviteUserByEmail(email, {
-      redirectTo: `${appUrl}/definir-senha`,
-      data: { full_name: ev.nome, phone: ev.telefone },
+    const criado = await db.auth.admin.createUser({
+      email,
+      email_confirm: true,
+      user_metadata: { full_name: ev.nome, phone: ev.telefone, needs_password: true },
     });
-    if (convite.error || !convite.data.user) throw convite.error ?? new Error('convite não criou usuário');
-    id = convite.data.user.id; // a trigger handle_new_user já criou o profile
+    if (criado.error || !criado.data.user) throw criado.error ?? new Error('compra não criou usuário');
+    id = criado.data.user.id; // a trigger handle_new_user já criou o profile
   }
 
   const plano = planoAoLiberar(tipo, existente.data?.plan_days);
