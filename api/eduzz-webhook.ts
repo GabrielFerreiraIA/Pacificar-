@@ -3,7 +3,7 @@
 //   1. Webhook do Console (developers.eduzz.com): JSON { id, event, data } + header x-signature (HMAC-SHA256)
 //   2. Entrega Customizada do Órbita (github.com/eduzz/custom-delivery): GET/POST de validação (200) e
 //      POST { type: 'create'|'remove', sid, nsid, fields: { edz_* } } (JSON ou form-urlencoded)
-import { supabaseAdmin } from './_lib/supabaseAdmin';
+import { supabaseAdmin } from './_lib/supabaseAdmin.js';
 import {
   conferirAssinatura,
   conferirEntregaCustomizada,
@@ -15,7 +15,7 @@ import {
   tipoDoProduto,
   type EventoEduzz,
   type TipoProduto,
-} from './_lib/eduzz';
+} from './_lib/eduzz.js';
 import type { Json } from '../src/types/database';
 
 const hoje = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' }); // AAAA-MM-DD

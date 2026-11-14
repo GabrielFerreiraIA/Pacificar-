@@ -1,8 +1,8 @@
 // Keep-alive do Supabase gratuito (T-40). Ver PLANO.md → "Keep-alive em detalhe".
 // Faz escrita e leitura reais no Postgres, porque o Supabase mede atividade de banco.
 // Chamado pelo Vercel Cron (diário) e pelo GitHub Actions (a cada 12h).
-import { supabaseAdmin } from './_lib/supabaseAdmin';
-import { segredoConfere } from './_lib/auth';
+import { supabaseAdmin } from './_lib/supabaseAdmin.js';
+import { segredoConfere } from './_lib/auth.js';
 
 const FONTES = new Set(['vercel-cron', 'github-actions', 'manual']);
 const RETENCAO_DIAS = 30;

@@ -2,7 +2,7 @@
 // O webhook da Eduzz cria a conta já confirmada com user_metadata.needs_password = true.
 // Na primeira vez que a paciente entra com o e-mail da compra, este endpoint grava a senha
 // escolhida e desliga needs_password. Contas que já definiram senha nunca são sobrescritas.
-import { supabaseAdmin } from './_lib/supabaseAdmin';
+import { supabaseAdmin } from './_lib/supabaseAdmin.js';
 
 const MIN_SENHA = 8;
 
