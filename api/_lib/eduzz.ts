@@ -25,13 +25,16 @@ interface Pessoa {
   name?: string | null;
   email?: string | null;
   cellphone?: string | null;
+  cellphoneNullable?: string | null;
   phone?: string | null;
+  phoneNullable?: string | null;
 }
 
 /**
  * Confere o header x-signature: HMAC-SHA256 do corpo com a chave secreta do webhook.
  * A documentação não diz se a saída é hex ou base64, então aceitamos as duas e
  * devolvemos qual bateu (aparece na resposta do ping, no histórico da Eduzz).
+ * Aceita múltiplas chaves separadas por vírgula em EDUZZ_WEBHOOK_SECRET.
  */
 export function conferirAssinatura(
   corpo: string,
@@ -39,16 +42,48 @@ export function conferirAssinatura(
   segredo: string | undefined
 ): 'hex' | 'base64' | null {
   if (!assinatura || !segredo) return null;
+  const segredos = segredo
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean);
+  if (!segredos.length) return null;
+
   const recebida = assinatura.trim().replace(/^sha256=/i, '');
-  const mac = createHmac('sha256', segredo).update(corpo, 'utf8').digest();
   const iguais = (a: string, b: string) => {
     const x = Buffer.from(a);
     const y = Buffer.from(b);
     return x.length === y.length && timingSafeEqual(x, y);
   };
-  if (iguais(recebida.toLowerCase(), mac.toString('hex'))) return 'hex';
-  if (iguais(recebida, mac.toString('base64'))) return 'base64';
+
+  for (const ch of segredos) {
+    const mac = createHmac('sha256', ch).update(corpo, 'utf8').digest();
+    if (iguais(recebida.toLowerCase(), mac.toString('hex'))) return 'hex';
+    if (iguais(recebida, mac.toString('base64'))) return 'base64';
+  }
   return null;
+}
+
+/**
+ * Detecta o payload sintético disparado pelo botão "Testar eventos selecionados"
+ * (ou na ativação do webhook) no Console da Eduzz (`/subscription/sample`),
+ * onde `producer.originSecret = "originsecrettest"` e os e-mails são `@example.com`.
+ * Responde 200 sem gravar paciente fictício (`rick.jones@example.com`) no banco.
+ */
+export function ehEventoDeTesteConsole(json: unknown, ev: EventoEduzz): boolean {
+  if (!json || typeof json !== 'object') return false;
+  const obj = json as Record<string, unknown>;
+  if (obj.test === true || obj.sample === true || obj.isTest === true) return true;
+  const data = (obj.data && typeof obj.data === 'object' ? obj.data : {}) as Record<string, unknown>;
+  if (data.test === true || data.sample === true || data.isTest === true) return true;
+  const producer = (data.producer && typeof data.producer === 'object' ? data.producer : {}) as Record<string, unknown>;
+  const originSecret = typeof producer.originSecret === 'string' ? producer.originSecret.trim().toLowerCase() : '';
+  if (originSecret === 'originsecrettest' || originSecret === 'token_de_seguranca_aqui' || originSecret === 'sec_abc123xyz') {
+    return true;
+  }
+  if (ev.email && /@(example\.(com|org)|exemplo\.com|examplo\.com|test\.com|teste\.com)$/i.test(ev.email)) {
+    return true;
+  }
+  return false;
 }
 
 const texto = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null);
@@ -262,9 +297,17 @@ export function interpretarEvento(json: unknown): EventoEduzz {
 
   const email = texto(pessoa.email)?.toLowerCase() ?? null;
   const nome = texto(pessoa.name) ?? '';
-  const telefone = texto(pessoa.cellphone) ?? texto(pessoa.phone);
-  const itens = Array.isArray(data.items) ? (data.items as Array<{ productId?: unknown; name?: unknown }>) : [];
-  const produtos = itens.map(i => (i.productId != null ? String(i.productId) : '')).filter(Boolean);
+  const telefone =
+    texto(pessoa.cellphone) ??
+    texto(pessoa.cellphoneNullable) ??
+    texto(pessoa.phone) ??
+    texto(pessoa.phoneNullable);
+  const itens = Array.isArray(data.items)
+    ? (data.items as Array<{ productId?: unknown; id?: unknown; name?: unknown }>)
+    : [];
+  const produtos = itens
+    .map(i => (i.productId != null ? String(i.productId) : i.id != null ? String(i.id) : ''))
+    .filter(Boolean);
 
   let acao: AcaoEduzz = 'registrar';
   let evento = event;

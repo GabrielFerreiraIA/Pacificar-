@@ -21,6 +21,22 @@ ok(r.status === 200 && j.assinatura === 'invalida', 'Ping sem assinatura → 200
 const pago = JSON.stringify({ id: 'e1', event: 'myeduzz.invoice_paid', data: { id: 1, buyer: { email: 'a@b.com' } } });
 r = await POST(req(pago, 'errada'));
 ok(r.status === 401, 'Fatura paga com assinatura errada → 401');
+
+const sampleConsole = JSON.stringify({
+  id: 'zszf0uk65g701io8dbsckfeld',
+  event: 'myeduzz.invoice_paid',
+  data: {
+    id: '12345678',
+    status: 'paid',
+    buyer: { name: 'Alice Johnson', email: 'alice.johnson@example.com' },
+    producer: { name: 'Orbita', email: 'orbita@eduzz.com', originSecret: 'originsecrettest' },
+    student: { name: 'Rick Jones', email: 'rick.jones@example.com' },
+  },
+});
+r = await POST(req(sampleConsole));
+j = await r.json();
+ok(r.status === 200 && j.teste === true, 'Teste de eventos do Console Eduzz (/subscription/sample) → 200 sem criar usuário fictício');
+
 r = await POST(req('{quebrado', assinar('{quebrado')));
 ok(r.status === 400, 'JSON quebrado → 400');
 

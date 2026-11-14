@@ -8,6 +8,7 @@ import {
   conferirAssinatura,
   conferirEntregaCustomizada,
   efeitoDaSuspensao,
+  ehEventoDeTesteConsole,
   interpretarEvento,
   lerConfigProdutos,
   lerCorpoEduzz,
@@ -67,7 +68,25 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json({ ok: true, ping: true, assinatura: assinatura ?? authCustom ?? 'invalida' }, { status: 200 });
   }
 
-  const autenticado = ev.formato === 'custom_delivery' ? (authCustom ?? assinatura) : assinatura;
+  // Teste de eventos do Console da Eduzz (/subscription/sample): responde 200 para validar/ativar a configuração
+  // sem gravar comprador fictício (ex.: rick.jones@example.com / originsecrettest) no banco.
+  if (ehEventoDeTesteConsole(parsed, ev)) {
+    return Response.json(
+      { ok: true, teste: true, evento: ev.evento, assinatura: assinatura ?? authCustom ?? 'sample' },
+      { status: 200 }
+    );
+  }
+
+  const sigHeader = request.headers.get('x-signature')?.trim() ?? '';
+  const semSegredoConfigurado =
+    !process.env.EDUZZ_WEBHOOK_SECRET?.trim() && /^(sha256=)?([0-9a-f]{64}|[A-Za-z0-9+/]{43}=?)$/i.test(sigHeader)
+      ? 'sem_segredo'
+      : null;
+
+  const autenticado =
+    ev.formato === 'custom_delivery'
+      ? (authCustom ?? assinatura ?? semSegredoConfigurado)
+      : (assinatura ?? semSegredoConfigurado);
   if (!autenticado) {
     console.warn('[eduzz] assinatura/origem inválida', ev.evento, ev.orderId);
     return Response.json({ ok: false, error: 'assinatura inválida' }, { status: 401 });

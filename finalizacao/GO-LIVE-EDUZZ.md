@@ -383,16 +383,16 @@ A Ana recebe o convite, define a senha e entra direto no painel de pacientes. O 
 
 O webhook novo fica no **Console de desenvolvedor** da Eduzz: no topo da Órbita, menu de apps (os 9 pontinhos) → **Integrações** (console.eduzz.com). Documentação: developers.eduzz.com/docs/webhook.
 
-1. **Webhook → Criar configuração.**
-2. **URL:** `https://SEU-APP/api/eduzz-webhook`
-3. **Chave de acesso:** crie uma chave nova (ex.: "Pacificar app"). Copie o segredo dela e cole em `EDUZZ_WEBHOOK_SECRET` na Vercel → **Redeploy** (variável nova só vale depois do redeploy).
+1. **Onde fica a Secret:** no menu lateral esquerdo do Console (`console.eduzz.com`), embaixo de **Webhook**, clique em **Chaves de acesso** (`https://console.eduzz.com/webhook/secrets`). Lá aparece a chave **Padrão** (com botão de copiar ao lado da coluna *Secret*; se aparecer mascarada com `***`, clique em **+ Nova Secret** no canto superior direito, dê o nome `Pacificar app` e copie o valor gerado). Cole esse valor em `EDUZZ_WEBHOOK_SECRET` na Vercel → **Redeploy**.
+2. **Webhook → Lista de configurações → Nova configuração** (ou editar a existente).
+3. **URL para envio dos dados:** `https://detoxpacificar21.vercel.app/api/eduzz-webhook` e **Secret:** selecione a chave (`Padrão` ou a que você criou).
 4. **Eventos** (MyEduzz → Fatura):
    - ✅ Paga (`myeduzz.invoice_paid`)
    - ✅ Reembolsada (`myeduzz.invoice_refunded`)
    - ✅ Chargeback (`myeduzz.invoice_chargeback`)
    - ✅ Cancelada (`myeduzz.invoice_canceled`)
 5. **Filtro (opcional):** se a tela permitir filtrar por produto, marque os **três** produtos Pacificar (7 dias, 21 dias e upgrade). É redundante com as variáveis `EDUZZ_PRODUCT_*`, mas reduz chamadas. Se esquecer o upgrade aqui, o upgrade pago não libera nada.
-6. **Verificar URL** e depois **Ativar**. A Eduzz manda um evento `ping`.
+6. Clique em **Verificar URL**, depois em **Testar eventos selecionados** (todos os 4 eventos respondem `200 OK` sem criar paciente fictício no banco) e **Salvar configuração** / **Ativar**.
 7. **Confira a resposta do ping** no **Histórico de envios**:
    - `{"ok":true,"ping":true,"assinatura":"hex"}` ou `"base64"` → ✅ tudo certo.
    - `"assinatura":"invalida"` → a chave na Vercel não é a mesma da Eduzz, ou faltou o redeploy. Corrija e clique em verificar de novo.
