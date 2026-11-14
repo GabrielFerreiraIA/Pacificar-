@@ -1,7 +1,8 @@
-// Regras puras do webhook da Eduzz (T-34). Sem banco, para dar para testar isolado.
-// Referência: https://developers.eduzz.com/docs/webhook (envelope, ping, segurança)
-// e https://developers.eduzz.com/reference/webhook/myeduzz-invoice-paid (campos da fatura).
-import { createHmac, timingSafeEqual } from 'node:crypto';
+// Regras puras do webhook e da Entrega Customizada da Eduzz (T-34 / T-90). Sem banco, para testar isolado.
+// Referências:
+// - Webhook (Console): https://developers.eduzz.com/docs/webhook e https://developers.eduzz.com/reference/webhook/myeduzz-invoice-paid
+// - Entrega Customizada (Órbita): https://github.com/eduzz/custom-delivery
+import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 
 export type AcaoEduzz = 'liberar' | 'suspender' | 'registrar' | 'ping';
 
@@ -16,6 +17,8 @@ export interface EventoEduzz {
   produtos: string[];
   /** Cópia enxuta para a tabela purchases: sem CPF nem endereço (LGPD). */
   resumo: Record<string, unknown>;
+  /** Origem do payload: webhook novo do Console ou Entrega Customizada do Órbita (T-90). */
+  formato?: 'webhook' | 'custom_delivery';
 }
 
 interface Pessoa {
@@ -50,14 +53,202 @@ export function conferirAssinatura(
 
 const texto = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null);
 
-/** Lê o envelope { id, event, data, sentDate } e decide o que fazer. Lança erro se o JSON não tiver o formato. */
+/**
+ * Converte o corpo bruto enviado pela Eduzz (JSON, form-urlencoded ou vazio no teste de validação
+ * da Entrega Customizada) num objeto pronto para `interpretarEvento`.
+ */
+export function lerCorpoEduzz(corpo: string): unknown {
+  if (!corpo || !corpo.trim()) return { event: 'ping' };
+  const limpo = corpo.trim();
+  if (limpo.startsWith('{') || limpo.startsWith('[')) {
+    return JSON.parse(limpo);
+  }
+  const params = new URLSearchParams(limpo);
+  const root: Record<string, unknown> = {};
+  const fields: Record<string, unknown> = {};
+  for (const [k, v] of params.entries()) {
+    const m = k.match(/^fields\[([^\]]+)\]$/);
+    if (m) {
+      fields[m[1]] = v;
+    } else {
+      root[k] = v;
+      if (k.startsWith('edz_') || k === 'trans_status') fields[k] = v;
+    }
+  }
+  if (Object.keys(fields).length) root.fields = fields;
+  if (!Object.keys(root).length) return { event: 'ping' };
+  return root;
+}
+
+/**
+ * Valida a autenticação da Entrega Customizada (`https://github.com/eduzz/custom-delivery`):
+ * 1. `fields.edz_cli_origin_secret` comparado com `EDUZZ_ORIGIN_SECRET` ou `EDUZZ_WEBHOOK_SECRET`
+ * 2. `nsid` = `sha1(edz_fat_cod + edz_cnt_cod + edz_cli_cod)`
+ * 3. `sid` = `md5(valores_ordenados_de_fields + edz_cli_apikey)`
+ */
+export function conferirEntregaCustomizada(
+  json: unknown,
+  env: Record<string, string | undefined>
+): 'origin_secret' | 'nsid' | 'sid' | 'origin_presente' | null {
+  if (!json || typeof json !== 'object') return null;
+  const obj = json as Record<string, unknown>;
+  const fields = (
+    obj.fields && typeof obj.fields === 'object' ? obj.fields : obj
+  ) as Record<string, unknown>;
+
+  const originRecebido = texto(fields.edz_cli_origin_secret);
+  const segredosConfigurados = [
+    ...(env.EDUZZ_ORIGIN_SECRET ?? '').split(','),
+    ...(env.EDUZZ_WEBHOOK_SECRET ?? '').split(','),
+  ]
+    .map(s => s.trim())
+    .filter(Boolean);
+
+  const iguais = (a: string, b: string) => {
+    const x = Buffer.from(a);
+    const y = Buffer.from(b);
+    return x.length === y.length && timingSafeEqual(x, y);
+  };
+
+  if (originRecebido && segredosConfigurados.some(s => iguais(originRecebido, s))) {
+    return 'origin_secret';
+  }
+
+  // Validação por nsid documentada no repositório oficial eduzz/custom-delivery
+  const nsid = texto(obj.nsid) ?? texto(fields.nsid);
+  const fatCod = fields.edz_fat_cod != null ? String(fields.edz_fat_cod) : '';
+  const cntCod = fields.edz_cnt_cod != null ? String(fields.edz_cnt_cod) : '';
+  const cliCod = fields.edz_cli_cod != null ? String(fields.edz_cli_cod) : '';
+  if (nsid && fatCod && cntCod && cliCod) {
+    const gerado = createHash('sha1').update(`${fatCod}${cntCod}${cliCod}`).digest('hex');
+    if (iguais(nsid.toLowerCase(), gerado.toLowerCase())) return 'nsid';
+  }
+
+  // Validação por sid (MD5 das chaves ordenadas + edz_cli_apikey)
+  const sid = texto(obj.sid) ?? texto(fields.sid);
+  const apiKey = texto(fields.edz_cli_apikey);
+  if (sid && apiKey && obj.fields && typeof obj.fields === 'object') {
+    const fObj = obj.fields as Record<string, unknown>;
+    const ordenado = Object.keys(fObj)
+      .sort()
+      .reduce((acc, k) => `${acc}${fObj[k] ?? ''}`, '');
+    const geradoSid = createHash('md5').update(ordenado + apiKey).digest('hex');
+    if (iguais(sid.toLowerCase(), geradoSid.toLowerCase())) return 'sid';
+  }
+
+  // Se o produtor ainda não cadastrou EDUZZ_ORIGIN_SECRET separadamente, aceita se edz_cli_origin_secret veio preenchido
+  if (!texto(env.EDUZZ_ORIGIN_SECRET) && originRecebido) {
+    return 'origin_presente';
+  }
+
+  return null;
+}
+
+function ehEntregaCustomizada(json: unknown): boolean {
+  if (!json || typeof json !== 'object') return false;
+  const obj = json as Record<string, unknown>;
+  if (texto(obj.event)) return false;
+  if (obj.fields && typeof obj.fields === 'object') return true;
+  if (obj.type === 'create' || obj.type === 'remove') return true;
+  if ('edz_fat_cod' in obj || 'edz_cnt_cod' in obj || 'edz_cli_email' in obj) return true;
+  return false;
+}
+
+function interpretarEntregaCustomizada(json: Record<string, unknown>): EventoEduzz {
+  const fields = (
+    json.fields && typeof json.fields === 'object' ? json.fields : json
+  ) as Record<string, unknown>;
+
+  const type = (texto(json.type) ?? texto(fields.type))?.toLowerCase() ?? null;
+  const rawOrderId = fields.edz_fat_cod != null ? String(fields.edz_fat_cod).trim() : '';
+  const orderId = rawOrderId && rawOrderId !== '0' ? rawOrderId : null;
+  const email = texto(fields.edz_cli_email)?.toLowerCase() ?? null;
+
+  // Ping / validação da URL da oferta no modal de Entrega Customizada do Órbita (retorna 200)
+  if (!orderId || (!email && type !== 'remove')) {
+    return {
+      acao: 'ping',
+      evento: 'ping',
+      orderId: orderId ?? 'ping',
+      email: null,
+      nome: '',
+      telefone: null,
+      produtos: [],
+      resumo: { formato: 'custom_delivery', type },
+      formato: 'custom_delivery',
+    };
+  }
+
+  const nome = texto(fields.edz_cli_rsocial) ?? texto(fields.edz_cli_nome) ?? '';
+  const telefone = texto(fields.edz_cli_cel) ?? texto(fields.edz_cli_tel) ?? null;
+  const produtos = [fields.edz_cnt_cod, fields.edz_cnt_paicod]
+    .filter(v => v != null && String(v).trim() !== '' && String(v).trim() !== '0')
+    .map(v => String(v).trim());
+
+  const fatStatus = Number(fields.edz_fat_status ?? fields.trans_status ?? 0);
+  let acao: AcaoEduzz = 'registrar';
+  if (type === 'remove' || [4, 6, 7, 10].includes(fatStatus)) {
+    acao = 'suspender';
+  } else if (type === 'create' || fatStatus === 3) {
+    acao = 'liberar';
+  }
+
+  const evento =
+    acao === 'liberar'
+      ? 'eduzz.custom_delivery.create'
+      : acao === 'suspender'
+        ? 'eduzz.custom_delivery.remove'
+        : `eduzz.custom_delivery.${type ?? (fatStatus || 'other')}`;
+
+  // Sem CPF (edz_cli_taxnumber) nem endereço na cópia salva em purchases (LGPD)
+  const resumo: Record<string, unknown> = {
+    formato: 'custom_delivery',
+    type,
+    status: fatStatus || null,
+    invoiceId: orderId,
+    produtos: [
+      {
+        productId: fields.edz_cnt_cod ?? null,
+        parentId: fields.edz_cnt_paicod ?? null,
+        name: fields.edz_cnt_titulo ?? null,
+      },
+    ],
+    valor: fields.edz_valorpago ?? null,
+    orderBump: fields.edz_order_bump_item ?? null,
+  };
+
+  return {
+    acao,
+    evento,
+    orderId,
+    email,
+    nome,
+    telefone,
+    produtos,
+    resumo,
+    formato: 'custom_delivery',
+  };
+}
+
+/**
+ * Lê tanto o envelope do Webhook do Console `{ id, event, data, sentDate }` quanto o payload da
+ * Entrega Customizada do Órbita `{ type, sid, nsid, fields: { edz_* } }` (T-90).
+ */
 export function interpretarEvento(json: unknown): EventoEduzz {
+  if (ehEntregaCustomizada(json)) {
+    return interpretarEntregaCustomizada(json as Record<string, unknown>);
+  }
+  // Objeto vazio enviado no botão de validação da Entrega Customizada do Órbita → ping 200
+  if (json && typeof json === 'object' && Object.keys(json as Record<string, unknown>).length === 0) {
+    return { acao: 'ping', evento: 'ping', orderId: 'ping', email: null, nome: '', telefone: null, produtos: [], resumo: {} };
+  }
+
   const env = json as { id?: unknown; event?: unknown; data?: Record<string, unknown> };
   const event = texto(env?.event);
   if (!event) throw new Error('evento sem o campo "event"');
 
   if (event === 'ping') {
-    return { acao: 'ping', evento: 'ping', orderId: String(env.id ?? 'ping'), email: null, nome: '', telefone: null, produtos: [], resumo: {} };
+    return { acao: 'ping', evento: 'ping', orderId: String(env.id ?? 'ping'), email: null, nome: '', telefone: null, produtos: [], resumo: {}, formato: 'webhook' };
   }
 
   const data = env.data ?? {};

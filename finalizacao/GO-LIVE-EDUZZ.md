@@ -114,13 +114,14 @@ Seus dados de saúde são tratados conforme a LGPD: só você e a sua terapeuta 
 
 ### Entregas de produto
 
-O acesso é entregue **pelo nosso webhook** (seção 6), não por área de membros da Eduzz. Em **Adicionar Entrega**, escolha a opção de **link externo / entrega personalizada** (o nome varia) e use:
+O acesso é entregue pelo nosso endpoint (`/api/eduzz-webhook`), que agora aceita **tanto o Webhook do Console quanto a Entrega Customizada do Órbita** (`https://github.com/eduzz/custom-delivery`, T-90). Em **Adicionar Entrega → Customizada**:
 
-- **Link:** `https://detoxpacificar21.vercel.app` (ou o domínio próprio, quando houver)
+- **URL da Entrega Customizada:** `https://detoxpacificar21.vercel.app/api/eduzz-webhook`
+  *(Atenção: na Entrega Customizada da Eduzz, a URL precisa terminar em `/api/eduzz-webhook`, porque a Eduzz faz um disparo HTTP para validar e entregar os dados da venda e exige retorno HTTP 200. Se usar a opção de "Redirecionamento / Link externo", aí sim o link é `https://detoxpacificar21.vercel.app`).*
 - **Texto para o comprador:**
   ```
   Seu acesso ao Pacificar já foi liberado com o mesmo e-mail usado na compra!
-  Abra o link do aplicativo, digite o e-mail da sua compra e escolha uma senha (mínimo de 8 caracteres) para entrar na sua jornada.
+  Acesse https://detoxpacificar21.vercel.app, digite o e-mail da sua compra e escolha uma senha (mínimo de 8 caracteres) para entrar na sua jornada.
   Qualquer dúvida, fale com a Ana pelo e-mail de suporte.
   ```
 

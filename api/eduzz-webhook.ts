@@ -1,16 +1,16 @@
-// Webhook da Eduzz (T-34): a compra aprovada cria o login da paciente.
-// Ver PLANO.md → "Fluxo Eduzz". Regras puras em _lib/eduzz.ts.
-//
-// Respostas:
-//   401 assinatura inválida (a Eduzz mostra no histórico de envios)
-//   200 processado, duplicado, ignorado ou ping
-//   500 falha ao gravar/convidar: a Eduzz pode reenviar, e o reenvio é seguro (idempotente)
+// Webhook e Entrega Customizada da Eduzz (T-34 / T-89 / T-90): a compra aprovada cria a conta ativa da paciente.
+// Suporta os dois formatos da Eduzz no mesmo endereço (/api/eduzz-webhook):
+//   1. Webhook do Console (developers.eduzz.com): JSON { id, event, data } + header x-signature (HMAC-SHA256)
+//   2. Entrega Customizada do Órbita (github.com/eduzz/custom-delivery): GET/POST de validação (200) e
+//      POST { type: 'create'|'remove', sid, nsid, fields: { edz_* } } (JSON ou form-urlencoded)
 import { supabaseAdmin } from './_lib/supabaseAdmin';
 import {
   conferirAssinatura,
+  conferirEntregaCustomizada,
   efeitoDaSuspensao,
   interpretarEvento,
   lerConfigProdutos,
+  lerCorpoEduzz,
   planoAoLiberar,
   tipoDoProduto,
   type EventoEduzz,
@@ -20,24 +20,56 @@ import type { Json } from '../src/types/database';
 
 const hoje = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' }); // AAAA-MM-DD
 
+/**
+ * Validação da URL no modal de Entrega Customizada do Órbita (requer status HTTP 200).
+ * Se uma paciente abrir esta URL no navegador, recebe 200 e é levada para a tela de login do app.
+ */
+export async function GET(request: Request): Promise<Response> {
+  const accept = request.headers.get('accept') ?? '';
+  if (accept.includes('text/html')) {
+    return new Response(
+      '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=/"><script>location.replace("/")</script><title>Pacificar</title></head><body>Redirecionando para o Pacificar…</body></html>',
+      { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+    );
+  }
+  return Response.json({ ok: true, ping: true, entrega: 'customizada' }, { status: 200 });
+}
+
+export async function HEAD(): Promise<Response> {
+  return new Response(null, { status: 200 });
+}
+
+export async function OPTIONS(): Promise<Response> {
+  return new Response(null, { status: 200 });
+}
+
 export async function POST(request: Request): Promise<Response> {
   const corpo = await request.text();
   const assinatura = conferirAssinatura(corpo, request.headers.get('x-signature'), process.env.EDUZZ_WEBHOOK_SECRET);
 
+  let parsed: unknown;
   let ev: EventoEduzz;
   try {
-    ev = interpretarEvento(JSON.parse(corpo));
+    parsed = lerCorpoEduzz(corpo);
+    ev = interpretarEvento(parsed);
   } catch (e) {
+    // Se não veio header x-signature do Console, pode ser um ping de validação da Entrega Customizada do Órbita
+    if (!request.headers.get('x-signature')) {
+      return Response.json({ ok: true, ping: true, entrega: 'customizada' }, { status: 200 });
+    }
     return Response.json({ ok: false, error: e instanceof Error ? e.message : 'json inválido' }, { status: 400 });
   }
 
-  // Ping de ativação: responde 200 sempre (senão a URL nem ativa) e diz se a assinatura bateu.
-  // No histórico de envios da Eduzz, a resposta deve mostrar "assinatura": "hex" ou "base64".
+  const authCustom = ev.formato === 'custom_delivery' ? conferirEntregaCustomizada(parsed, process.env) : null;
+
+  // Ping de ativação (Console Webhook ou validação de Entrega Customizada no Órbita): responde 200 sempre.
   if (ev.acao === 'ping') {
-    return Response.json({ ok: true, ping: true, assinatura: assinatura ?? 'invalida' });
+    return Response.json({ ok: true, ping: true, assinatura: assinatura ?? authCustom ?? 'invalida' }, { status: 200 });
   }
-  if (!assinatura) {
-    console.warn('[eduzz] assinatura inválida', ev.evento, ev.orderId);
+
+  const autenticado = ev.formato === 'custom_delivery' ? (authCustom ?? assinatura) : assinatura;
+  if (!autenticado) {
+    console.warn('[eduzz] assinatura/origem inválida', ev.evento, ev.orderId);
     return Response.json({ ok: false, error: 'assinatura inválida' }, { status: 401 });
   }
 

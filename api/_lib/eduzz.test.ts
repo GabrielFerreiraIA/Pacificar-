@@ -1,7 +1,16 @@
 // Testes das regras puras do webhook da Eduzz (T-34). Não toca no banco.
 // Uso: node ./node_modules/tsx/dist/cli.mjs api/_lib/eduzz.test.ts
-import { createHmac } from 'node:crypto';
-import { conferirAssinatura, efeitoDaSuspensao, interpretarEvento, lerConfigProdutos, planoAoLiberar, tipoDoProduto } from './eduzz';
+import { createHash, createHmac } from 'node:crypto';
+import {
+  conferirAssinatura,
+  conferirEntregaCustomizada,
+  efeitoDaSuspensao,
+  interpretarEvento,
+  lerConfigProdutos,
+  lerCorpoEduzz,
+  planoAoLiberar,
+  tipoDoProduto,
+} from './eduzz';
 
 let falhas = 0;
 const ok = (c: boolean, m: string) => { console.log(`${c ? '✔' : '✘'} ${m}`); if (!c) falhas++; };
@@ -72,6 +81,42 @@ ok(planoAoLiberar('21d', null) === 21 && planoAoLiberar('upgrade', 7) === 21, '2
 ok(planoAoLiberar('7d', 21) === 21, 'Quem já tem 21 e compra o de 7 continua com 21');
 ok(efeitoDaSuspensao('upgrade') === 'voltar-para-7', 'Estorno do upgrade volta para 7 dias');
 ok(efeitoDaSuspensao('7d') === 'suspender' && efeitoDaSuspensao('21d') === 'suspender', 'Estorno da jornada suspende');
+
+// Entrega Customizada do Órbita (T-90 · github.com/eduzz/custom-delivery)
+const nsidTeste = createHash('sha1').update('555111S21999').digest('hex');
+const customCreate = {
+  type: 'create',
+  nsid: nsidTeste,
+  fields: {
+    edz_fat_cod: 555111,
+    edz_fat_status: 3,
+    edz_cnt_cod: 'S21',
+    edz_cnt_titulo: 'Pacificar 21 dias',
+    edz_cli_cod: 999,
+    edz_cli_rsocial: 'Maria Custom',
+    edz_cli_email: 'Maria.Custom@Exemplo.com',
+    edz_cli_cel: '47988887777',
+    edz_cli_taxnumber: '12345678900',
+    edz_cli_origin_secret: 'segredo-orbita',
+    edz_valorpago: 1500,
+  },
+};
+const evCustom = interpretarEvento(customCreate);
+ok(evCustom.formato === 'custom_delivery' && evCustom.acao === 'liberar', 'Entrega Customizada type=create libera');
+ok(evCustom.orderId === '555111' && evCustom.email === 'maria.custom@exemplo.com', 'Entrega Customizada lê fatura e e-mail');
+ok(evCustom.produtos.includes('S21') && tipoDoProduto(evCustom.produtos, cfg) === '21d', 'Entrega Customizada mapeia edz_cnt_cod → plano');
+ok(!JSON.stringify(evCustom.resumo).includes('12345678900'), 'Entrega Customizada não guarda CPF no resumo (LGPD)');
+ok(conferirEntregaCustomizada(customCreate, { EDUZZ_WEBHOOK_SECRET: 'segredo-orbita' }) === 'origin_secret', 'Entrega Customizada valida origin_secret');
+ok(conferirEntregaCustomizada(customCreate, { EDUZZ_WEBHOOK_SECRET: 'outro-segredo' }) === 'nsid', 'Entrega Customizada valida nsid (SHA-1)');
+
+const evRemove = interpretarEvento({ ...customCreate, type: 'remove' });
+ok(evRemove.acao === 'suspender', 'Entrega Customizada type=remove suspende');
+
+const formBody = 'type=create&fields[edz_fat_cod]=777&fields[edz_cnt_cod]=S7&fields[edz_cli_email]=ana@teste.com&fields[edz_cli_origin_secret]=seg';
+const evForm = interpretarEvento(lerCorpoEduzz(formBody));
+ok(evForm.acao === 'liberar' && evForm.orderId === '777' && tipoDoProduto(evForm.produtos, cfg) === '7d', 'Entrega Customizada aceita form-urlencoded');
+ok(interpretarEvento(lerCorpoEduzz('')).acao === 'ping', 'Corpo vazio na validação da oferta responde ping (200)');
+ok(interpretarEvento({ type: 'create', fields: {} }).acao === 'ping', 'Teste de validação sem fatura responde ping (200)');
 
 if (falhas) process.exit(1);
 console.log('\nWebhook Eduzz: regras OK');
