@@ -71,11 +71,11 @@ O Pacificar é um aplicativo de acompanhamento de 21 dias criado pela terapeuta 
 
 O que você recebe ao comprar:
 • Acesso ao app Pacificar por e-mail, logo após a confirmação do pagamento. Funciona no celular e no computador e pode ser instalado na tela inicial.
-• Jornada guiada de 21 dias: a cada dia, um tema, um áudio de orientação, cardápio sugerido (café da manhã, almoço, jantar e chá) e uma prática simples de autocuidado.
+• Jornada guiada de 21 dias: a cada dia, um tema, cardápio sugerido (café da manhã, almoço, jantar e chá) e uma prática simples de autocuidado.
 • Anamnese completa de saúde integrativa, que a Ana usa para personalizar suas orientações.
 • Check-in diário de sintomas, sono, digestão e energia, com relatório semanal da sua evolução.
 • Guia de nutrição com receitas anti-inflamatórias feitas com ingredientes brasileiros.
-• Protocolos acompanhados pela terapeuta, com calendário e lembretes.
+• Protocolos acompanhados pela terapeuta, com calendário lunar.
 • Envio de exames laboratoriais pelo próprio app, de forma privada e segura.
 
 Como funciona:
@@ -87,6 +87,8 @@ Importante: o Pacificar é um programa educativo e de acompanhamento em saúde i
 
 Seus dados de saúde são tratados conforme a LGPD: só você e a sua terapeuta têm acesso.
 ```
+
+> ⚠️ Os áudios diários ainda estão desligados no app (T-51: a Ana precisa gravar). Por isso a descrição **não** os promete. Quando eles forem ao ar, acrescente a frase "um áudio de orientação da Ana" na descrição.
 
 **Categorias:** escolha as duas mais próximas na lista da Eduzz, nesta ordem de preferência: **Saúde e Bem-estar** · **Alimentação / Nutrição** (ou **Saúde e Esportes**, se for o nome disponível).
 
