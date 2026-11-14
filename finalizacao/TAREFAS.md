@@ -82,7 +82,7 @@ Use os comandos em vez de editar à mão:  npm run tarefa -- iniciar|concluir|bl
   - `profiles.plan_days` (7 ou 21). Webhook mapeia produto → plano (`EDUZZ_PRODUCT_7D`, `_21D`, `_UPGRADE`). Dias 8–21 com cadeado e upsell para quem tem 7 dias. Ver D15.
 - [ ] **T-88** Cadastrar na Eduzz os produtos de 7 dias e de upgrade e o link do checkout do upgrade · @gabriel · dep: T-87, T-35
   - Passo a passo em `finalizacao/GO-LIVE-EDUZZ.md` (seção 1B). IDs em `EDUZZ_PRODUCT_7D` / `_21D` / `_UPGRADE` e link em `VITE_EDUZZ_UPGRADE_URL` na Vercel.
-- [~] **T-89** Compra cria conta ativa sem verificação de e-mail (senha definida no primeiro acesso) · @agente · dep: T-34, T-87 · em andamento: antigravity (2026-11-13)
+- [x] **T-89** Compra cria conta ativa sem verificação de e-mail (senha definida no primeiro acesso) · @agente · dep: T-34, T-87 · concluída: antigravity (2026-11-13)
   - Webhook `api/eduzz-webhook.ts` usa `auth.admin.createUser({ email, email_confirm: true, user_metadata: { needs_password: true } })` em vez de `inviteUserByEmail`. Endpoint `api/primeiro-acesso.ts` grava a senha escolhida na primeira entrada se `needs_password = true`.Dispensa Resend/SMTP para liberar acesso.
 
 ## Fase 4 · Keep-alive (Supabase gratuito não pausa)
