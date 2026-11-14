@@ -84,7 +84,7 @@ Use os comandos em vez de editar à mão:  npm run tarefa -- iniciar|concluir|bl
   - Passo a passo em `finalizacao/GO-LIVE-EDUZZ.md` (seção 1B). IDs em `EDUZZ_PRODUCT_7D` / `_21D` / `_UPGRADE` e link em `VITE_EDUZZ_UPGRADE_URL` na Vercel.
 - [x] **T-89** Compra cria conta ativa sem verificação de e-mail (senha definida no primeiro acesso) · @agente · dep: T-34, T-87 · concluída: antigravity (2026-11-13)
   - Webhook `api/eduzz-webhook.ts` usa `auth.admin.createUser({ email, email_confirm: true, user_metadata: { needs_password: true } })` em vez de `inviteUserByEmail`. Endpoint `api/primeiro-acesso.ts` grava a senha escolhida na primeira entrada se `needs_password = true`.Dispensa Resend/SMTP para liberar acesso.
-- [~] **T-90** Suporte à Entrega Customizada da Eduzz (`eduzz/custom-delivery`) no webhook · @agente · dep: T-34, T-89 · em andamento: antigravity (2026-11-13)
+- [x] **T-90** Suporte à Entrega Customizada da Eduzz (`eduzz/custom-delivery`) no webhook · @agente · dep: T-34, T-89 · concluída: antigravity (2026-11-13)
   - Aceitar `GET`/`HEAD` (validação da URL com 200) e `POST` no formato `{ type: 'create'|'remove', sid, nsid, fields: { edz_* } }` (JSON ou form-urlencoded) em `api/eduzz-webhook.ts`, validando `edz_cli_origin_secret` e `nsid`.
 - [ ] **T-89** Compra cria conta ativa sem verificação de e-mail (senha definida no primeiro acesso) · @agente · dep: T-34, T-87
   - Webhook `api/eduzz-webhook.ts` usa `auth.admin.createUser({ email, email_confirm: true, user_metadata: { needs_password: true } })` em vez de `inviteUserByEmail`. Endpoint `api/primeiro-acesso.ts` grava a senha escolhida na primeira entrada se `needs_password = true`.Dispensa Resend/SMTP para liberar acesso.
