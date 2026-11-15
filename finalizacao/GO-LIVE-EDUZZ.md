@@ -367,6 +367,17 @@ Resposta esperada: `{"ok":true,"source":"manual",...}`.
 
 Depois, no GitHub: **Settings → Secrets and variables → Actions → New repository secret**: `CRON_SECRET` e `APP_URL`. Em **Actions → keepalive → Run workflow**, rode uma vez para testar. A partir daí o Supabase não pausa mais.
 
+### 4.4 Quarta fonte: o n8n do Gabriel (a cada 12h)
+
+O app já aceita `?src=n8n` (aparece na tabela `heartbeat` com essa origem). Para ligar:
+
+1. n8n → **Workflows → Import from File** → `finalizacao/n8n/keepalive-supabase.json`.
+2. No nó **Chamar keep-alive**, troque `COLE_AQUI_O_CRON_SECRET` pelo valor real do `CRON_SECRET` (o mesmo da Vercel), mantendo o prefixo `Bearer `. O segredo fica só no seu n8n: **não** o salve de volta no repositório.
+3. Clique em **Execute workflow**: o nó deve devolver `{"ok":true,"source":"n8n",...}`.
+4. **Ative** o workflow (chave no canto superior). Ele roda a cada 12 horas e tenta 3 vezes se falhar.
+5. Opcional, para ser avisado se parar: crie um workflow com **Error Trigger** que mande WhatsApp ou e-mail, e nas configurações deste workflow escolha-o em **Error Workflow**.
+6. Conferência (SQL Editor): `select source, date(created_at), count(*) from heartbeat group by 1,2 order by 2 desc`. Deve aparecer a linha `n8n` todos os dias.
+
 ---
 
 ## 5. Conta de terapeuta da Ana

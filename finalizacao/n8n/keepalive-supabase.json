@@ -1,0 +1,52 @@
+{
+  "name": "Pacificar · Keep-alive do Supabase",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            { "field": "hours", "hoursInterval": 12 }
+          ]
+        }
+      },
+      "id": "a1f3c2d0-0001-4a10-9a01-pacificar0001",
+      "name": "A cada 12 horas",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://detoxpacificar21.vercel.app/api/keepalive?src=n8n",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer COLE_AQUI_O_CRON_SECRET" }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "a1f3c2d0-0002-4a10-9a01-pacificar0002",
+      "name": "Chamar keep-alive",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [260, 0],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 10000
+    }
+  ],
+  "connections": {
+    "A cada 12 horas": {
+      "main": [
+        [
+          { "node": "Chamar keep-alive", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  },
+  "settings": { "executionOrder": "v1" }
+}

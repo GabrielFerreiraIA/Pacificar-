@@ -16,6 +16,9 @@ r = await GET(new Request(`${base}?src=manual`, { headers: { authorization: `Bea
 const j = await r.json();
 ok(r.status === 200 && j.ok === true && j.source === 'manual' && typeof j.total === 'number', `Segredo certo → 200 ${JSON.stringify(j)}`);
 
+r = await GET(new Request(`${base}?src=n8n`, { headers: { authorization: `Bearer ${process.env.CRON_SECRET}` } }));
+ok((await r.json()).source === 'n8n', 'Fonte "n8n" é reconhecida');
+
 r = await GET(new Request(`${base}?src=qualquer`, { headers: { authorization: `Bearer ${process.env.CRON_SECRET}` } }));
 ok((await r.json()).source === 'manual', 'Fonte desconhecida vira "manual"');
 
