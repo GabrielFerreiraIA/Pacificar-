@@ -341,8 +341,16 @@ export function interpretarEvento(json: unknown): EventoEduzz {
      EDUZZ_PRODUCT_7D       jornada de 7 dias
      EDUZZ_PRODUCT_21D      jornada de 21 dias (EDUZZ_PRODUCT_IDS, o nome antigo, conta como 21)
      EDUZZ_PRODUCT_UPGRADE  upgrade de 7 para 21, vendido dentro do app
-   Cada variável aceita vários ids separados por vírgula. Todas vazias = qualquer
-   produto da conta libera 21 dias (o comportamento de antes). */
+   Cada variável aceita vários ids separados por vírgula. Com todas vazias valem os
+   ids de PRODUTOS_PADRAO (os três produtos reais da Ana), então a Vercel não precisa
+   de nenhuma variável de produto. Preencher qualquer uma delas substitui o padrão. */
+
+/** Códigos dos produtos Pacificar na Eduzz (Órbita → Produtos). Não são segredo. */
+export const PRODUTOS_PADRAO = {
+  p7: ['3151467'],
+  p21: ['3151466'],
+  upgrade: ['3151468'],
+};
 
 export type TipoProduto = '7d' | '21d' | 'upgrade';
 export type PlanoDias = 7 | 21;
@@ -356,11 +364,15 @@ export interface ConfigProdutos {
 const lista = (v: string | undefined) => (v ?? '').split(',').map(s => s.trim()).filter(Boolean);
 
 export function lerConfigProdutos(env: Record<string, string | undefined>): ConfigProdutos {
-  return {
+  const cfg: ConfigProdutos = {
     p7: lista(env.EDUZZ_PRODUCT_7D),
     p21: [...lista(env.EDUZZ_PRODUCT_21D), ...lista(env.EDUZZ_PRODUCT_IDS)],
     upgrade: lista(env.EDUZZ_PRODUCT_UPGRADE),
   };
+  if (!cfg.p7.length && !cfg.p21.length && !cfg.upgrade.length) {
+    return { p7: [...PRODUTOS_PADRAO.p7], p21: [...PRODUTOS_PADRAO.p21], upgrade: [...PRODUTOS_PADRAO.upgrade] };
+  }
+  return cfg;
 }
 
 /**

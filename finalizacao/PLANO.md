@@ -134,8 +134,8 @@ T-14 (migrar o AppContext) toca em quase tudo: rode **sozinha**, sem outra sess�
 | `VITE_SUPABASE_ANON_KEY` | Vercel + `.env.local` | cliente |
 | `SUPABASE_SERVICE_ROLE_KEY` | **só Vercel** (nunca `VITE_`) | funções `api/` |
 | `EDUZZ_WEBHOOK_SECRET` | só Vercel | validar `x-signature` do webhook |
-| `EDUZZ_PRODUCT_7D` / `_21D` / `_UPGRADE` | só Vercel | ids dos produtos de cada versão (D15) |
-| `VITE_EDUZZ_UPGRADE_URL` | Vercel (público) | link do checkout do upgrade, aberto pelo app |
+| `EDUZZ_PRODUCT_7D` / `_21D` / `_UPGRADE` | opcional (Vercel) | substitui os ids padrão dos produtos (3151467, 3151466, 3151468), que já estão em `api/_lib/eduzz.ts` (D15) |
+| `VITE_EDUZZ_UPGRADE_URL` | opcional (Vercel, público) | substitui o link do checkout do upgrade, que já está em `src/config/plano.ts` |
 | `VITE_ANA_WHATSAPP` | Vercel (público) | contato da Ana e reserva do botão de upgrade |
 | `CRON_SECRET` | Vercel + GitHub Secrets | keep-alive |
 | `APP_URL` | Vercel + GitHub Secrets | redirects e keep-alive |

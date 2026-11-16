@@ -355,10 +355,8 @@ git push origin main
 | `APP_URL` | `https://SEU-APP` (sem barra no final) |
 | `CRON_SECRET` | o segredo aleatório gerado na seção 2 |
 | `EDUZZ_WEBHOOK_SECRET` | a chave secreta do webhook (seção 6, passo 3) |
-| `EDUZZ_PRODUCT_21D` | ID do produto de 21 dias (seção 1) |
-| `EDUZZ_PRODUCT_7D` | ID do produto de 7 dias (seção 1B) |
-| `EDUZZ_PRODUCT_UPGRADE` | ID do produto de upgrade (seção 1B) |
-| `VITE_EDUZZ_UPGRADE_URL` | link do checkout do upgrade (seção 1B). Vazio = o botão abre o WhatsApp da Ana |
+| `EDUZZ_PRODUCT_21D` / `_7D` / `_UPGRADE` | **não precisa criar.** Os códigos 3151466, 3151467 e 3151468 já estão no código (`PRODUTOS_PADRAO` em `api/_lib/eduzz.ts`). Só crie se um produto novo for substituir um destes |
+| `VITE_EDUZZ_UPGRADE_URL` | **não precisa criar.** O link `https://chk.eduzz.com/wv5vlxod` já está no código (`src/config/plano.ts`). Se criar, a variável tem prioridade |
 | `EDUZZ_PRODUCT_IDS` | **não criar** (nome antigo; se existir, conta como 21 dias) |
 | `VITE_ANA_WHATSAPP` | WhatsApp da Ana, só dígitos |
 | `VITE_DEMO` | **não criar** (ou deixar vazio) |
@@ -465,10 +463,10 @@ Se o passo 3 falhar, veja a seção 9.
 | `invoice_paid` com **401** | Mesmo motivo acima | Idem. Depois clique em **Reenviar** no histórico da Eduzz |
 | `invoice_paid` com **500** e erro de SMTP / "Error sending invite email" | Resend não configurado | Seção 3.4. Depois reenvie o evento (é seguro: não duplica) |
 | `invoice_paid` com **500** "SUPABASE_URL … ausente" | Faltou variável na Vercel | Seção 4.2 + redeploy |
-| `"resultado":"ignorado: outro produto"` | ID errado em `EDUZZ_PRODUCT_7D` / `_21D` / `_UPGRADE` | Confira o ID do produto, corrija, faça redeploy e reenvie |
-| Comprou o upgrade, mas os dias seguem com cadeado | Comprou com outro e-mail (o histórico mostra `suspensão sem conta` ou cria uma conta nova) ou faltou o redeploy depois de criar `EDUZZ_PRODUCT_UPGRADE` | Painel da Ana → paciente → Prescrição → **Liberar 21 dias**. Depois confira as variáveis |
-| Botão "Desbloquear os 21 dias" abre o WhatsApp | `VITE_EDUZZ_UPGRADE_URL` vazia ou sem redeploy | Cadastre o link (1B) e faça redeploy (variável `VITE_` só entra no build) |
-| Paciente de 7 dias recebeu 21 | Produto de 7 dias não está em `EDUZZ_PRODUCT_7D` e todas as variáveis estão vazias (aí qualquer produto libera 21) | Preencha as três variáveis. Corrija a paciente no painel (**Voltar para 7 dias**) |
+| `"resultado":"ignorado: outro produto"` | Código do produto diferente do padrão (3151467, 3151466, 3151468) | Confira o ID do produto. Se mudou, ajuste `PRODUTOS_PADRAO` em `api/_lib/eduzz.ts`, faça o deploy e reenvie |
+| Comprou o upgrade, mas os dias seguem com cadeado | Comprou com outro e-mail (o histórico mostra `suspensão sem conta` ou cria uma conta nova) ou o código do upgrade na Eduzz não é o 3151468 | Painel da Ana → paciente → Prescrição → **Liberar 21 dias**. Depois confira as variáveis |
+| Botão "Desbloquear os 21 dias" abre o WhatsApp | Deploy antigo no ar (o link do upgrade já está no código, em `src/config/plano.ts`) | Confirme que o último push gerou deploy na Vercel |
+| Paciente de 7 dias recebeu 21 | O código do produto de 7 dias na Eduzz não é o 3151467 e outra variável `EDUZZ_PRODUCT_*` o substituiu | Confira os códigos em `api/_lib/eduzz.ts`. Corrija a paciente no painel (**Voltar para 7 dias**) |
 | Convite chega, mas o link abre página de erro | Redirect URL faltando no Supabase | Seção 3.3 |
 | Pessoa diz que não recebeu o e-mail | Spam ou e-mail digitado errado na compra | Supabase → Authentication → Users: se o e-mail está lá, clique em "Send magic link/invite" de novo |
 | Supabase pausou de novo | Keep-alive parado | Seção 4.3. Veja a tabela `heartbeat`: deve ter linhas `supabase-cron` a cada 6h. No SQL Editor: `select * from cron.job_run_details order by start_time desc limit 5` e `select status_code from net._http_response order by created desc limit 5` |
@@ -488,7 +486,7 @@ Se o passo 3 falhar, veja a seção 9.
 - [x] Migration `plano_dias` aplicada (coluna `plan_days` existe)
 - [ ] Preços dos 7 dias e do upgrade definidos com a Ana
 - [ ] Três produtos aprovados na moderação da Eduzz e IDs em `EDUZZ_PRODUCT_21D`, `_7D` e `_UPGRADE`
-- [ ] Link do checkout do upgrade em `VITE_EDUZZ_UPGRADE_URL`
+- [ ] Último push publicado na Vercel (o link do upgrade e os códigos dos produtos já vão no código)
 - [ ] Webhook ativo na Eduzz, ping com `"assinatura":"hex"` ou `"base64"`
 - [ ] Compra de teste → convite → senha → app → reembolso → acesso suspenso
 - [ ] Compra de 7 dias → cadeado no dia 8 → upgrade → 21 dias liberados → estorno do upgrade → volta para 7

@@ -1,15 +1,17 @@
 /* Duas versões do app (T-87 · D15): jornada de 7 ou de 21 dias.
    Quem comprou 7 dias vê os dias 8 a 21 com cadeado e a oferta de upgrade.
 
-   VITE_EDUZZ_UPGRADE_URL: link do checkout do produto "upgrade 7 → 21" na Eduzz
-   (público, não é segredo). Sem ele, o botão abre o WhatsApp da Ana com a mensagem
-   pronta, para a venda não travar enquanto o produto não estiver cadastrado. */
+   Link do checkout do produto "upgrade 7 → 21" na Eduzz (3151468, público, não é segredo).
+   Fica direto no código para não depender de variável na Vercel. Se um dia o link mudar,
+   troque aqui. VITE_EDUZZ_UPGRADE_URL, se existir, tem prioridade (útil para testes). */
 import type { UserProfile } from '../types';
 import { linkWhatsAppAna } from './contato';
 
 export const DIAS_JORNADA_COMPLETA = 21;
 
-const checkout = (import.meta.env.VITE_EDUZZ_UPGRADE_URL ?? '').trim();
+export const LINK_CHECKOUT_UPGRADE = 'https://chk.eduzz.com/wv5vlxod';
+
+const checkout = (import.meta.env.VITE_EDUZZ_UPGRADE_URL ?? '').trim() || LINK_CHECKOUT_UPGRADE;
 
 /** Dias que a pessoa comprou. Terapeuta e perfis sem a informação: 21. */
 export function diasDoPlano(user: UserProfile | null | undefined, role?: string): 7 | 21 {

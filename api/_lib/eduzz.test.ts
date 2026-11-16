@@ -66,7 +66,11 @@ ok(lancou, 'Sem data.id → erro');
 
 // Duas versões do app (T-87): produto → plano
 const semConfig = lerConfigProdutos({});
-ok(tipoDoProduto(['P567'], semConfig) === '21d', 'Sem configuração, qualquer produto libera 21 dias (como antes)');
+ok(tipoDoProduto(['3151467'], semConfig) === '7d', 'Sem variáveis, vale o código padrão do produto de 7 dias');
+ok(tipoDoProduto(['3151466'], semConfig) === '21d', 'Sem variáveis, vale o código padrão do produto de 21 dias');
+ok(tipoDoProduto(['3151468'], semConfig) === 'upgrade', 'Sem variáveis, vale o código padrão do upgrade');
+ok(tipoDoProduto(['3151466', '3151468'], semConfig) === 'upgrade', 'Fatura com 21 dias e upgrade: vale o que dá mais acesso');
+ok(tipoDoProduto(['P567'], semConfig) === null, 'Sem variáveis, outro produto da conta é ignorado');
 const legado = lerConfigProdutos({ EDUZZ_PRODUCT_IDS: 'P1, P567' });
 ok(tipoDoProduto(['P567'], legado) === '21d', 'EDUZZ_PRODUCT_IDS (nome antigo) conta como 21 dias');
 ok(tipoDoProduto(['P999'], legado) === null, 'Outro produto da conta é ignorado');
