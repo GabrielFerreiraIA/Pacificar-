@@ -1,0 +1,4 @@
+
+# PDFs e imagens sao binarios: nunca converter fim de linha
+*.pdf binary
+*.png binary
