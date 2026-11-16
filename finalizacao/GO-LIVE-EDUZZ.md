@@ -118,12 +118,10 @@ O acesso é entregue pelo nosso endpoint (`/api/eduzz-webhook`), que agora aceit
 
 - **URL da Entrega Customizada:** `https://detoxpacificar21.vercel.app/api/eduzz-webhook`
   *(Atenção: na Entrega Customizada da Eduzz, a URL precisa terminar em `/api/eduzz-webhook`, porque a Eduzz faz um disparo HTTP para validar e entregar os dados da venda e exige retorno HTTP 200. Se usar a opção de "Redirecionamento / Link externo", aí sim o link é `https://detoxpacificar21.vercel.app`).*
-- **Texto para o comprador:**
-  ```
-  Seu acesso ao Pacificar já foi liberado com o mesmo e-mail usado na compra!
-  Acesse https://detoxpacificar21.vercel.app, digite o e-mail da sua compra e escolha uma senha (mínimo de 8 caracteres) para entrar na sua jornada.
-  Qualquer dúvida, fale com a Ana pelo e-mail de suporte.
-  ```
+- **A Eduzz não tem campo de texto para o comprador** nesta tela: a entrega "Customizado" só recebe a URL. Quem explica o acesso à compradora é um **PDF de uma página**, entregue como **segunda entrega**:
+  1. Na mesma aba **Entrega**: **Adicionar Entrega → Arquivos**.
+  2. Envie `finalizacao/entrega/como-acessar-pacificar.pdf` (produtos de 21 e de 7 dias) ou `finalizacao/entrega/como-acessar-upgrade.pdf` (produto de upgrade). Se o endereço do app mudar: `python finalizacao/entrega/gerar-pdfs.py`.
+  3. Se a Eduzz aceitar só uma entrega por produto, o plano B é a mensagem manual da Ana (WhatsApp) e o e-mail de boas-vindas pelo Resend.
 
 Não escolha Nutror, Alpaclass nem "área de membros": o conteúdo está no app.
 
