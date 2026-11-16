@@ -123,6 +123,20 @@ O acesso é entregue pelo nosso endpoint (`/api/eduzz-webhook`), que agora aceit
   2. Envie `finalizacao/entrega/como-acessar-pacificar.pdf` (produtos de 21 e de 7 dias) ou `finalizacao/entrega/como-acessar-upgrade.pdf` (produto de upgrade). Se o endereço do app mudar: `python finalizacao/entrega/gerar-pdfs.py`.
   3. Se a Eduzz aceitar só uma entrega por produto, o plano B é a mensagem manual da Ana (WhatsApp) e o e-mail de boas-vindas pelo Resend.
 
+  **Onde estão os arquivos no seu PC** (copie e cole):
+
+  Abrir a pasta: cole na barra de endereço do Explorador de Arquivos e aperte Enter.
+  ```
+  C:\Users\FS RENTAL\pacificar-—-saúde-integrativa-&-ayurveda\finalizacao\entrega
+  ```
+
+  Enviar o arquivo: na janela de envio da Eduzz, cole no campo **Nome do arquivo** e aperte Enter.
+  ```
+  C:\Users\FS RENTAL\pacificar-—-saúde-integrativa-&-ayurveda\finalizacao\entrega\como-acessar-pacificar.pdf
+  C:\Users\FS RENTAL\pacificar-—-saúde-integrativa-&-ayurveda\finalizacao\entrega\como-acessar-upgrade.pdf
+  ```
+  > Se a pasta do projeto for renomeada (T-03), o caminho muda; dentro dela o arquivo continua em \finalizacao\entrega.
+
 Não escolha Nutror, Alpaclass nem "área de membros": o conteúdo está no app.
 
 ### Direitos privados de etiqueta (PLR)
